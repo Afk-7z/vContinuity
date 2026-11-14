@@ -1,0 +1,2732 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vContinuity — Painel de Controle Local</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f141c;
+      --bg-elev: #171f2c;
+      --bg-card: #1c2636;
+      --bg-muted: #131a24;
+      --border: #2b3950;
+      --text: #e7edf6;
+      --text-dim: #a3b5cf;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-bg: rgba(59, 130, 246, 0.14);
+      --ok: #10b981;
+      --ok-bg: rgba(16, 185, 129, 0.16);
+      --warn: #f59e0b;
+      --warn-bg: rgba(245, 158, 11, 0.16);
+      --err: #ef4444;
+      --err-bg: rgba(239, 68, 68, 0.16);
+      --chip-bg: #253348;
+      --focus: #60a5fa;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", "Fira Code", Consolas, monospace;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f6fa;
+        --bg-elev: #ffffff;
+        --bg-card: #ffffff;
+        --bg-muted: #eef2f7;
+        --border: #cfd8e6;
+        --text: #111827;
+        --text-dim: #4b5563;
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --accent-bg: rgba(37, 99, 235, 0.1);
+        --ok: #047857;
+        --ok-bg: rgba(5, 150, 105, 0.12);
+        --warn: #b45309;
+        --warn-bg: rgba(217, 119, 6, 0.14);
+        --err: #b91c1c;
+        --err-bg: rgba(220, 38, 38, 0.12);
+        --chip-bg: #e5ebf5;
+        --focus: #1d4ed8;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    header {
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .brand-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
+      flex-shrink: 0;
+    }
+    .brand-dot.offline {
+      background: var(--err);
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    }
+    .brand h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 600; padding: 2px 9px;
+      border-radius: 999px; background: var(--chip-bg); color: var(--text);
+      max-width: 100%; overflow-wrap: anywhere;
+    }
+    .badge.ok { background: var(--ok-bg); color: var(--ok); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge.err { background: var(--err-bg); color: var(--err); }
+    .badge.accent { background: var(--accent-bg); color: var(--accent); }
+    .header-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--text-dim); }
+    main { max-width: 1400px; margin: 0 auto; padding: 20px 24px 48px; }
+    .banner {
+      background: var(--accent-bg); border: 1px solid var(--accent);
+      color: var(--text); padding: 10px 14px; border-radius: 10px;
+      margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .banner.ok { background: var(--ok-bg); border-color: var(--ok); }
+    .banner.warn { background: var(--warn-bg); border-color: var(--warn); }
+    .banner.err { background: var(--err-bg); border-color: var(--err); }
+    .banner[hidden] { display: none; }
+    .alert-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-muted);
+    }
+    .alert-box[hidden] { display: none; }
+    .alert-box.err { border-color: var(--err); background: var(--err-bg); }
+    .alert-box.warn { border-color: var(--warn); background: var(--warn-bg); }
+    .alert-box.ok { border-color: var(--ok); background: var(--ok-bg); }
+    .alert-box.info { border-color: var(--accent); background: var(--accent-bg); }
+    .pending-alert {
+      background: var(--warn-bg); border: 2px solid var(--warn);
+      border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    }
+    .pending-alert[hidden] { display: none; }
+    .pending-alert h2 { margin: 0 0 10px; font-size: 16px; color: var(--warn); }
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px; margin-bottom: 20px;
+    }
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .kpi-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+    .kpi-value { font-size: 20px; font-weight: 700; margin-bottom: 4px; overflow-wrap: anywhere; }
+    .kpi-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 18px;
+    }
+    .tab-btn {
+      background: transparent; color: var(--text-dim); border: 1px solid transparent;
+      padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600;
+    }
+    .tab-btn:hover { background: var(--bg-muted); color: var(--text); }
+    .tab-btn.active { background: var(--accent); color: #fff; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .split-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 12px 0; }
+    .summary-box {
+      background: var(--bg-muted); border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+    }
+    .summary-box h4 {
+      margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim);
+    }
+    .summary-box ul { margin: 0; padding-left: 18px; }
+    .summary-box li { margin-bottom: 3px; overflow-wrap: anywhere; }
+    .summary-box p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .compare-pane {
+      background: var(--bg-muted); border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; min-width: 0;
+    }
+    .compare-pane h4 { margin: 0 0 6px; font-size: 13px; }
+    .compare-pane pre { max-height: 460px; margin-top: 6px; }
+    @media (max-width: 960px) {
+      .split-grid, .two-col, .compare-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      header { padding: 12px 14px; }
+      main { padding: 14px 14px 36px; }
+    }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .card-header h3 { margin: 0; font-size: 15px; font-weight: 650; }
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+    .list-item {
+      border: 1px solid var(--border); background: var(--bg-muted);
+      border-radius: 10px; padding: 11px 13px; cursor: pointer; transition: border-color 0.15s;
+      text-align: left; width: 100%; color: inherit;
+    }
+    .list-item:hover { border-color: var(--accent); }
+    .list-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .list-item-title { font-weight: 650; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .list-item-meta { font-size: 12px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 8px; }
+    button, .btn {
+      font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--bg-muted); color: var(--text); cursor: pointer;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    button.danger { background: var(--err-bg); border-color: var(--err); color: var(--err); }
+    button.small { font-size: 12px; padding: 4px 9px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    code, pre { font-family: var(--mono); font-size: 12.5px; }
+    code { background: var(--bg-muted); padding: 2px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+    pre {
+      background: var(--bg-muted); border: 1px solid var(--border); border-radius: 9px;
+      padding: 12px; overflow-x: auto; max-height: 420px; white-space: pre-wrap; word-break: break-word; margin: 8px 0 0;
+    }
+    .subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .subtab-btn { font-size: 12px; padding: 5px 10px; border-radius: 6px; }
+    .subtab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .field-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+    .field-row label { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+    input[type="text"], input[type="search"], textarea, select {
+      width: 100%; background: var(--bg-muted); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 8px 10px; font: inherit;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .scope-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; margin: 10px 0; }
+    .scope-item {
+      display: flex; align-items: flex-start; gap: 7px; background: var(--bg-muted);
+      border: 1px solid var(--border); padding: 7px 9px; border-radius: 8px; font-size: 12.5px;
+    }
+    .muted { color: var(--text-dim); }
+    .flex-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .inline-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .inline-group select { width: auto; min-width: 190px; max-width: 320px; padding: 6px 10px; }
+    .history-item {
+      background: var(--bg-muted); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+    }
+    .history-item-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+    .history-item-body { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    .diff-line-add { display: block; background: rgba(16, 185, 129, 0.16); padding: 1px 4px; border-radius: 3px; }
+    .diff-line-rem { display: block; background: rgba(239, 68, 68, 0.16); padding: 1px 4px; border-radius: 3px; }
+    details.log-section { margin-top: 10px; }
+    details.log-section summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.62);
+      display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100;
+    }
+    .modal-backdrop[hidden] { display: none; }
+    .modal-dialog {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+      max-width: 560px; width: 100%; padding: 18px 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-dialog h3 { margin: 0 0 8px; font-size: 16px; }
+    .modal-preview-list {
+      max-height: 220px; overflow-y: auto; background: var(--bg-muted);
+      border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin: 10px 0;
+      list-style: disc; padding-left: 24px; font-size: 12.5px;
+    }
+    .modal-preview-list[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <input type="hidden" id="csrf-token" name="csrf" value="__CSRF_TOKEN__">
+
+  <header>
+    <div class="brand">
+      <span id="health-dot" class="brand-dot" aria-hidden="true"></span>
+      <h1>vContinuity</h1>
+      <span id="version-badge" class="badge">v0.7.0</span>
+      <span id="surface-badge" class="badge ok">13 Web · 1 Agent</span>
+    </div>
+    <div class="header-controls">
+      <span id="uptime-label">Iniciando…</span>
+      <span id="refresh-status" class="muted" aria-live="polite"></span>
+      <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" id="auto-refresh" checked> Atualização automática (2s)
+      </label>
+      <button id="refresh-now" type="button">Atualizar agora</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="banner" class="banner" role="status" aria-live="polite" hidden>
+      <span id="banner-text">__BANNER_MESSAGE__</span>
+      <button id="banner-close" type="button">Fechar</button>
+    </div>
+
+    <section id="pending-oauth-box" class="pending-alert" aria-labelledby="pending-oauth-heading" hidden>
+      <h2 id="pending-oauth-heading">Solicitações de acesso OAuth aguardando aprovação</h2>
+      <div id="pending-oauth-list"></div>
+    </section>
+
+    <section class="kpi-grid" aria-label="Resumo operacional">
+      <div class="kpi-card">
+        <div class="kpi-label">Estado do Runtime</div>
+        <div id="kpi-health" class="kpi-value">Verificando…</div>
+        <div id="kpi-ports" class="kpi-sub">Portas 7781 · 7783 · 7791</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Trabalho Ativo (Web / Agent)</div>
+        <div id="kpi-active-work" class="kpi-value">—</div>
+        <div id="kpi-active-work-sub" class="kpi-sub">Nenhum selecionado</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Jobs Supervisionados</div>
+        <div id="kpi-jobs" class="kpi-value">0</div>
+        <div id="kpi-jobs-sub" class="kpi-sub">Nenhum job em execução</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Conexões OAuth Ativas</div>
+        <div id="kpi-oauth" class="kpi-value">0</div>
+        <div id="kpi-oauth-sub" class="kpi-sub">0 tokens ativos</div>
+      </div>
+    </section>
+
+    <nav class="tabs" role="tablist" aria-label="Seções do painel">
+      <button id="tab-btn-works" class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="tab-works" data-tab="works">Continuidade (Work Context)</button>
+      <button id="tab-btn-jobs" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-jobs" data-tab="jobs">Processos e Jobs</button>
+      <button id="tab-btn-oauth" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-oauth" data-tab="oauth">Segurança e OAuth</button>
+      <button id="tab-btn-transfers" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-transfers" data-tab="transfers">Transferência de Arquivos</button>
+      <button id="tab-btn-system" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-system" data-tab="system">Superfícies e Configuração</button>
+    </nav>
+
+    <section id="tab-works" class="panel active" role="tabpanel" aria-labelledby="tab-btn-works">
+      <div class="card" id="project-discovery-card">
+        <div class="card-header">
+          <h3>Descobrir ou Registrar Projeto por Pasta</h3>
+          <span class="muted" style="font-size:12px">Verifica se uma pasta autorizada já possui trabalho de continuidade</span>
+        </div>
+        <div class="flex-row" style="align-items:flex-end">
+          <div class="field-row" style="flex:1 1 340px;margin-bottom:0">
+            <label for="project-cwd-input">Pasta do projeto</label>
+            <input type="text" id="project-cwd-input" list="workspace-roots-datalist" placeholder="Informe ou escolha uma pasta autorizada">
+            <datalist id="workspace-roots-datalist"></datalist>
+          </div>
+          <button id="btn-discover-project" type="button" class="primary">Verificar pasta</button>
+        </div>
+        <div id="project-quick-roots" class="flex-row" style="margin-top:8px"></div>
+        <div id="project-discovery-result" style="margin-top:12px" hidden></div>
+      </div>
+
+      <div class="split-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3>Projetos em Continuidade</h3>
+            <span id="works-count-badge" class="badge">0</span>
+          </div>
+          <div id="works-error-box" class="alert-box err" role="alert" hidden></div>
+          <div id="works-list" class="item-list">
+            <p class="muted">Carregando trabalhos…</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" id="work-detail-card">
+            <div class="card-header">
+              <h3 id="work-detail-title">Selecione um projeto</h3>
+              <div class="flex-row" id="work-detail-actions" hidden>
+                <button id="btn-activate-agent" type="button" title="Definir como trabalho ativo para o Agente local">Ativar no Agent</button>
+                <button id="btn-activate-web" type="button" title="Definir como trabalho ativo padrão local para a superfície Web">Ativar na Web (padrão local)</button>
+                <div id="web-oauth-activate-group" class="inline-group" hidden>
+                  <label for="web-connection-select" class="sr-only">Cliente OAuth para ativação na Web</label>
+                  <select id="web-connection-select" aria-label="Cliente OAuth para ativação na Web"></select>
+                  <button id="btn-activate-web-conn" type="button">Ativar na conexão OAuth</button>
+                </div>
+                <button id="btn-copy-resume" type="button" class="primary">Copiar comando de retomada</button>
+              </div>
+            </div>
+            <div id="work-detail-error" class="alert-box err" role="alert" hidden></div>
+            <div id="work-detail-meta" class="muted" style="margin-bottom:10px"></div>
+            <div id="work-guidance-box" class="alert-box info" hidden></div>
+
+            <div id="work-summary-section" hidden>
+              <div class="summary-grid" id="work-summary-grid"></div>
+            </div>
+
+            <div class="subtabs" id="work-doc-tabs" role="tablist" aria-label="Visualizações do trabalho" hidden>
+              <button class="subtab-btn active" type="button" role="tab" aria-selected="true" data-doc="context">Contexto (context.md)</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="handoff">Handoff (handoff.md)</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="compact">Compactado (compact.md)</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="events">Histórico recente (até 200)</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="checkpoints">Comparar Checkpoints</button>
+            </div>
+
+            <pre id="work-doc-viewer">Selecione um projeto à esquerda para inspecionar o contexto, handoff e histórico de eventos.</pre>
+
+            <div id="work-history-panel" hidden>
+              <div class="alert-box info" style="margin-top:8px">
+                <strong>Escopo da busca:</strong> pesquisa somente nos registros recentes carregados para este trabalho (até <strong>200 itens</strong> por categoria: eventos, comandos, arquivos e decisões). Não consulta trabalhos antigos nem todo o disco.
+              </div>
+              <div class="flex-row" style="margin-bottom:8px">
+                <div class="field-row" style="flex:1 1 240px;margin-bottom:0">
+                  <label for="history-search-input">Filtrar histórico recente</label>
+                  <input type="search" id="history-search-input" placeholder="Buscar por ferramenta, arquivo, comando, decisão ou cliente">
+                </div>
+                <div class="field-row" style="width:210px;margin-bottom:0">
+                  <label for="history-category-filter">Categoria</label>
+                  <select id="history-category-filter">
+                    <option value="all">Todas as categorias</option>
+                    <option value="events">Eventos</option>
+                    <option value="commands">Comandos</option>
+                    <option value="files">Arquivos</option>
+                    <option value="decisions">Decisões</option>
+                  </select>
+                </div>
+                <button id="history-search-clear" type="button" style="align-self:flex-end">Limpar filtro</button>
+              </div>
+              <div id="history-search-status" class="muted" style="font-size:12px;margin-bottom:8px"></div>
+              <div id="history-results-list" class="item-list" style="max-height:420px;overflow-y:auto"></div>
+            </div>
+
+            <div id="work-checkpoints-panel" hidden>
+              <div class="flex-row" style="margin-top:8px;align-items:flex-end">
+                <div class="field-row" style="flex:1 1 180px;margin-bottom:0">
+                  <label for="ckpt-left-select">Checkpoint A (base / anterior)</label>
+                  <select id="ckpt-left-select"></select>
+                </div>
+                <div class="field-row" style="flex:1 1 180px;margin-bottom:0">
+                  <label for="ckpt-right-select">Checkpoint B (comparado / mais recente)</label>
+                  <select id="ckpt-right-select"></select>
+                </div>
+                <button id="btn-compare-checkpoints" type="button" class="primary">Comparar</button>
+              </div>
+              <div class="flex-row" style="margin-top:8px;justify-content:space-between">
+                <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px">
+                  <input type="checkbox" id="ckpt-diff-only"> Destacar linhas diferentes entre A e B
+                </label>
+                <span id="ckpt-compare-status" class="muted" style="font-size:12px"></span>
+              </div>
+              <div id="ckpt-compare-error" class="alert-box err" role="alert" style="margin-top:8px" hidden></div>
+              <div class="compare-grid" id="ckpt-compare-grid" hidden>
+                <div class="compare-pane">
+                  <h4 id="ckpt-left-title">Checkpoint A</h4>
+                  <pre id="ckpt-left-content">—</pre>
+                </div>
+                <div class="compare-pane">
+                  <h4 id="ckpt-right-title">Checkpoint B</h4>
+                  <pre id="ckpt-right-content">—</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="work-update-card" hidden>
+            <div class="card-header">
+              <h3>Registrar Checkpoint ou Passagem de Bastão (Handoff)</h3>
+              <div class="flex-row">
+                <span id="work-draft-badge" class="badge">Base rev —</span>
+                <button id="btn-discard-draft" type="button" class="small" hidden>Descartar rascunho</button>
+              </div>
+            </div>
+
+            <div id="work-server-update-notice" class="alert-box warn" role="status" hidden></div>
+            <div id="work-conflict-box" class="alert-box err" role="alert" hidden></div>
+            <div id="work-update-error" class="alert-box err" role="alert" hidden></div>
+
+            <div class="two-col">
+              <div class="field-row">
+                <label for="wf-phase">Fase atual</label>
+                <input type="text" id="wf-phase" placeholder="ex.: active, handoff-to-codex, ready-for-review">
+              </div>
+              <div class="field-row">
+                <label for="wf-to-client">Destino do Handoff (opcional)</label>
+                <input type="text" id="wf-to-client" placeholder="ex.: codex-desktop" value="codex-desktop">
+              </div>
+            </div>
+            <div class="field-row">
+              <label for="wf-summary">Resumo do estado atual</label>
+              <textarea id="wf-summary" placeholder="Descreva o que foi feito ou o ponto exato de parada"></textarea>
+            </div>
+            <div class="field-row">
+              <label for="wf-next">Próximos passos (um por linha)</label>
+              <textarea id="wf-next" placeholder="Ex.: Rodar testes de integração"></textarea>
+            </div>
+            <div class="two-col">
+              <div class="field-row">
+                <label for="wf-tests">Testes / Verificações (opcional, um por linha)</label>
+                <textarea id="wf-tests" placeholder="Ex.: npm test — 12 passed"></textarea>
+              </div>
+              <div class="field-row">
+                <label for="wf-revalidate">Itens para revalidar (opcional, um por linha)</label>
+                <textarea id="wf-revalidate" placeholder="Ex.: Status das portas locais 7781/7791"></textarea>
+              </div>
+            </div>
+            <div class="flex-row">
+              <button id="btn-save-checkpoint" type="button" class="primary">Salvar Checkpoint</button>
+              <button id="btn-save-handoff" type="button">Criar Handoff para Codex</button>
+              <button id="btn-close-work" type="button" class="danger">Encerrar Trabalho</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-jobs" class="panel" role="tabpanel" aria-labelledby="tab-btn-jobs">
+      <div class="split-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3>Fila de Jobs (data/jobs)</h3>
+            <button id="btn-prune-jobs" type="button" title="Visualiza prévia e move jobs finalizados e logs para arquivo morto">Arquivar finalizados…</button>
+          </div>
+          <div id="jobs-error-box" class="alert-box err" role="alert" hidden></div>
+          <div id="jobs-archive-bar" class="alert-box ok" hidden>
+            <div class="flex-row" style="justify-content:space-between">
+              <span id="jobs-archive-text"></span>
+              <button id="btn-restore-jobs" type="button" class="small">Restaurar arquivo</button>
+            </div>
+          </div>
+          <div id="jobs-restore-box" class="flex-row" style="margin-bottom:10px;align-items:flex-end">
+            <div class="field-row" style="flex:1 1 200px;margin-bottom:0">
+              <label for="job-restore-archive-id">Restaurar arquivo por ID</label>
+              <input type="text" id="job-restore-archive-id" placeholder="Informe o ID do arquivo (ex.: archive_…)">
+            </div>
+            <button id="btn-restore-by-id" type="button">Restaurar por ID</button>
+          </div>
+          <div id="jobs-list" class="item-list">
+            <p class="muted">Carregando jobs…</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 id="job-detail-title">Detalhes do Job</h3>
+            <div class="flex-row">
+              <button id="btn-download-job-logs" type="button" hidden>Salvar logs em arquivo (.log)</button>
+              <button id="btn-cancel-job" type="button" class="danger" hidden>Cancelar execução</button>
+            </div>
+          </div>
+          <div id="job-detail-error" class="alert-box err" role="alert" hidden></div>
+          <div id="job-detail-meta" class="muted" style="margin-bottom:10px">Selecione um job à esquerda para inspecionar e exportar logs (stdout e stderr).</div>
+          <details class="log-section" open>
+            <summary>Saída Padrão (stdout)</summary>
+            <pre id="job-stdout">—</pre>
+          </details>
+          <details class="log-section" open>
+            <summary>Saída de Erro (stderr)</summary>
+            <pre id="job-stderr">—</pre>
+          </details>
+          <details class="log-section">
+            <summary>Eventos do Supervisor</summary>
+            <pre id="job-events">—</pre>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-oauth" class="panel" role="tabpanel" aria-labelledby="tab-btn-oauth">
+      <div class="card">
+        <div class="card-header">
+          <h3>Conexões Autorizadas (grants)</h3>
+          <div class="flex-row">
+            <span id="oauth-stats-badge" class="badge">0 clientes</span>
+            <button id="btn-prune-oauth" type="button" title="Visualiza prévia para remover grants revogados e tokens inativos, preservando todos os clientes registrados">Limpar grants e tokens inativos…</button>
+          </div>
+        </div>
+        <div id="oauth-error-box" class="alert-box err" role="alert" hidden></div>
+        <div id="oauth-grants-container" class="table-wrap">
+          <p class="muted">Carregando conexões OAuth…</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Escopos Suportados pela Superfície Web</h3>
+        </div>
+        <div id="oauth-scopes-catalog" class="scope-grid"></div>
+      </div>
+    </section>
+
+    <section id="tab-transfers" class="panel" role="tabpanel" aria-labelledby="tab-btn-transfers">
+      <div class="card">
+        <div class="card-header">
+          <h3>Estado do Transporte de Arquivos</h3>
+          <span id="transfer-tunnel-badge" class="badge">Túnel em repouso</span>
+        </div>
+        <p id="transfer-paths-info" class="muted" style="margin:0"></p>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <h3>Arquivos Importados (imports/)</h3>
+          </div>
+          <div id="transfers-imports-list" class="table-wrap"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Arquivos para Exportação (exports/)</h3>
+          </div>
+          <div id="transfers-exports-list" class="table-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-system" class="panel" role="tabpanel" aria-labelledby="tab-btn-system">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <h3>Endereços e Portas</h3>
+          </div>
+          <div class="table-wrap">
+            <table id="system-endpoints-table">
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Pastas Autorizadas (workspaceRoots)</h3>
+          </div>
+          <div id="system-roots-list" class="item-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Contrato de Ferramentas MCP (v0.7.0)</h3>
+        </div>
+        <p class="muted" style="margin-top:0">Superfície <strong>Agent</strong> (/mcp/agent): exclusivamente <code>vcontinuity.work</code>. Superfície <strong>Web</strong> (/mcp/web): 13 ferramentas abaixo.</p>
+        <div id="system-tools-list" class="scope-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="confirm-modal" class="modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-desc" hidden>
+    <div class="modal-dialog">
+      <h3 id="confirm-modal-title">Confirmar ação</h3>
+      <p id="confirm-modal-desc" style="margin:6px 0 10px"></p>
+      <ul id="confirm-modal-items" class="modal-preview-list" hidden></ul>
+      <div class="flex-row" style="justify-content:flex-end;margin-top:14px">
+        <button id="confirm-modal-cancel" type="button">Cancelar</button>
+        <button id="confirm-modal-ok" type="button" class="primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const csrf = document.getElementById("csrf-token").value;
+      const $ = (id) => document.getElementById(id);
+      const escHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+
+      let state = null;
+      let selectedWorkId = null;
+      let formBoundWorkId = null;
+      let needsInitialWorkLoad = false;
+      let selectedWorkData = null;
+      let selectedWorkDoc = "context";
+      let selectedJobId = null;
+      let selectedJobData = null;
+      let lastJobArchive = null;
+      let activeTabName = "works";
+
+      const SESSION_DRAFTS_KEY = "vcontinuity.dashboard.drafts.v1";
+      const SESSION_UI_KEY = "vcontinuity.dashboard.ui.v1";
+
+      // Request and concurrency guards
+      let overviewInFlight = false;
+      let overviewSeq = 0;
+      let overviewController = null;
+      let workDetailSeq = 0;
+      let workDetailController = null;
+      let jobDetailSeq = 0;
+      let jobDetailController = null;
+      let projectSeq = 0;
+      let projectController = null;
+      let ckptCompareSeq = 0;
+      let ckptCompareController = null;
+      const busyLocks = new Set();
+
+      // Persistent UI drafts and caches (survive 2s polling and blur)
+      const pendingScopeDrafts = new Map();
+      const workDrafts = new Map();
+      const historyFilterByWork = new Map();
+      const checkpointCache = new Map();
+      const checkpointPairByWork = new Map();
+
+      function persistSessionDrafts() {
+        try {
+          const serialized = {};
+          for (const [id, d] of workDrafts.entries()) {
+            if (d && (d.dirty || d.conflict)) {
+              serialized[id] = {
+                workId: d.workId,
+                baseRevision: d.baseRevision,
+                base: d.base,
+                current: d.current,
+                dirty: Boolean(d.dirty),
+                conflict: d.conflict ? { currentRevision: d.conflict.currentRevision, error: d.conflict.error, serverData: null } : null,
+              };
+            }
+          }
+          if (Object.keys(serialized).length) {
+            sessionStorage.setItem(SESSION_DRAFTS_KEY, JSON.stringify(serialized));
+          } else {
+            sessionStorage.removeItem(SESSION_DRAFTS_KEY);
+          }
+        } catch {}
+      }
+
+      function persistSessionUI() {
+        try {
+          sessionStorage.setItem(SESSION_UI_KEY, JSON.stringify({
+            selectedWorkId,
+            lastJobArchive,
+            activeTabName,
+          }));
+        } catch {}
+      }
+
+      function restoreSessionState() {
+        try {
+          const rawDrafts = sessionStorage.getItem(SESSION_DRAFTS_KEY);
+          if (rawDrafts) {
+            const parsed = JSON.parse(rawDrafts);
+            if (parsed && typeof parsed === "object") {
+              for (const [id, d] of Object.entries(parsed)) {
+                if (d && d.workId && d.base && d.current) {
+                  workDrafts.set(id, {
+                    workId: d.workId,
+                    baseRevision: d.baseRevision,
+                    base: d.base,
+                    current: d.current,
+                    dirty: Boolean(d.dirty),
+                    serverUpdatedNotice: null,
+                    conflict: d.conflict || null,
+                  });
+                }
+              }
+            }
+          }
+          const rawUi = sessionStorage.getItem(SESSION_UI_KEY);
+          if (rawUi) {
+            const ui = JSON.parse(rawUi);
+            if (ui && typeof ui === "object") {
+              if (typeof ui.selectedWorkId === "string" && ui.selectedWorkId) {
+                selectedWorkId = ui.selectedWorkId;
+                needsInitialWorkLoad = true;
+              }
+              if (typeof ui.lastJobArchive === "string" && ui.lastJobArchive) {
+                lastJobArchive = ui.lastJobArchive;
+                $("job-restore-archive-id").value = lastJobArchive;
+              }
+              if (typeof ui.activeTabName === "string" && $("tab-" + ui.activeTabName)) {
+                activeTabName = ui.activeTabName;
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // Render signatures to prevent DOM thrashing/focus loss during polling
+      let lastPendingSig = "";
+      let lastWorksSig = "";
+      let lastJobsSig = "";
+      let lastOAuthGrantsSig = "";
+      let lastOAuthScopesSig = "";
+      let lastTransfersSig = "";
+      let lastSystemSig = "";
+      let lastProjectRootsSig = "";
+
+      function showBanner(msg, kind = "info") {
+        if (!msg) return;
+        const banner = $("banner");
+        banner.className = "banner " + (kind === "error" ? "err" : kind);
+        $("banner-text").textContent = msg;
+        banner.hidden = false;
+      }
+
+      const initialBanner = $("banner-text").textContent.trim();
+      if (initialBanner) $("banner").hidden = false;
+      $("banner-close").addEventListener("click", () => { $("banner").hidden = true; });
+
+      function setBoxError(boxId, message) {
+        const box = $(boxId);
+        if (!box) return;
+        if (!message) {
+          box.hidden = true;
+          box.textContent = "";
+        } else {
+          box.textContent = message;
+          box.hidden = false;
+        }
+      }
+
+      function formatBytes(bytes) {
+        const n = Number(bytes || 0);
+        if (n < 1024) return n + " B";
+        if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+        return (n / (1024 * 1024)).toFixed(2) + " MB";
+      }
+
+      function formatUptime(sec) {
+        const s = Number(sec || 0);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const r = s % 60;
+        if (h > 0) return h + "h " + m + "m " + r + "s";
+        if (m > 0) return m + "m " + r + "s";
+        return r + "s";
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "—";
+        try { return new Date(iso).toLocaleString("pt-BR"); }
+        catch { return String(iso); }
+      }
+
+      function toLines(val) {
+        if (Array.isArray(val)) return val.map((x) => String(x ?? "")).filter(Boolean).join("\n");
+        if (typeof val === "string") return val;
+        return "";
+      }
+
+      function parseLines(text) {
+        return String(text || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      }
+
+      function toArray(val) {
+        if (Array.isArray(val)) return val.map((x) => String(x ?? "").trim()).filter(Boolean);
+        if (typeof val === "string") return parseLines(val);
+        return [];
+      }
+
+      async function fetchJson(url, options = {}) {
+        const res = await fetch(url, { cache: "no-store", ...options });
+        const raw = await res.text();
+        let data = {};
+        try {
+          data = raw ? JSON.parse(raw) : {};
+        } catch {
+          data = { ok: false, error: raw ? raw.slice(0, 240) : ("HTTP " + res.status) };
+        }
+        // Archiving can succeed for some jobs and fail for others in the same
+        // request. Keep the receipt, including the archive ID and each failure.
+        if (!res.ok || (data.ok === false && !Array.isArray(data.failed))) {
+          const err = new Error(data.error || data.message || ("Erro HTTP " + res.status));
+          err.status = res.status;
+          err.code = data.code || null;
+          err.data = data;
+          throw err;
+        }
+        return data;
+      }
+
+      async function apiAction(payload) {
+        return fetchJson("/api/action", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-csrf-token": csrf },
+          body: JSON.stringify({ ...payload, csrf }),
+        });
+      }
+
+      async function withActionLock(lockKey, controls, fn) {
+        if (busyLocks.has(lockKey)) return null;
+        busyLocks.add(lockKey);
+        const list = Array.isArray(controls) ? controls : [controls];
+        const prevStates = list.map((el) => el ? { el, disabled: el.disabled } : null).filter(Boolean);
+        for (const item of prevStates) {
+          item.el.disabled = true;
+          item.el.setAttribute("aria-busy", "true");
+        }
+        try {
+          return await fn();
+        } finally {
+          busyLocks.delete(lockKey);
+          for (const item of prevStates) {
+            item.el.disabled = item.disabled;
+            item.el.removeAttribute("aria-busy");
+          }
+        }
+      }
+
+      // Accessible confirmation modal
+      let activeConfirmResolve = null;
+      let lastFocusedBeforeModal = null;
+
+      function openConfirmDialog({ title, description, items = [], confirmLabel = "Confirmar", danger = false }) {
+        return new Promise((resolve) => {
+          activeConfirmResolve = resolve;
+          lastFocusedBeforeModal = document.activeElement;
+          $("confirm-modal-title").textContent = title || "Confirmar ação";
+          $("confirm-modal-desc").textContent = description || "";
+          const listEl = $("confirm-modal-items");
+          if (items && items.length) {
+            listEl.innerHTML = items.map((item) => {
+              if (typeof item === "string") return "<li>" + escHtml(item) + "</li>";
+              const label = item.label || item.jobId || item.id || item.clientName || JSON.stringify(item);
+              const detail = item.detail || item.reason || item.status || "";
+              return "<li><strong>" + escHtml(label) + "</strong>" + (detail ? (" <span class=\"muted\">(" + escHtml(detail) + ")</span>") : "") + "</li>";
+            }).join("");
+            listEl.hidden = false;
+          } else {
+            listEl.innerHTML = "";
+            listEl.hidden = true;
+          }
+          const okBtn = $("confirm-modal-ok");
+          okBtn.textContent = confirmLabel;
+          okBtn.className = danger ? "danger" : "primary";
+          $("confirm-modal").hidden = false;
+          $("confirm-modal-cancel").focus();
+        });
+      }
+
+      function closeConfirmDialog(accepted) {
+        if ($("confirm-modal").hidden) return;
+        $("confirm-modal").hidden = true;
+        const resolve = activeConfirmResolve;
+        activeConfirmResolve = null;
+        if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === "function") {
+          try { lastFocusedBeforeModal.focus(); } catch {}
+        }
+        lastFocusedBeforeModal = null;
+        if (resolve) resolve(Boolean(accepted));
+      }
+
+      $("confirm-modal-cancel").addEventListener("click", () => closeConfirmDialog(false));
+      $("confirm-modal-ok").addEventListener("click", () => closeConfirmDialog(true));
+      $("confirm-modal").addEventListener("click", (e) => {
+        if (e.target === $("confirm-modal")) closeConfirmDialog(false);
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !$("confirm-modal").hidden) {
+          e.preventDefault();
+          closeConfirmDialog(false);
+        }
+      });
+
+      // Main tabs
+      function activateTab(tabName) {
+        if (!tabName || !$("tab-" + tabName)) return;
+        activeTabName = tabName;
+        for (const b of document.querySelectorAll(".tab-btn")) {
+          const isMatch = b.dataset.tab === tabName;
+          b.classList.toggle("active", isMatch);
+          b.setAttribute("aria-selected", isMatch ? "true" : "false");
+        }
+        for (const p of document.querySelectorAll(".panel")) {
+          p.classList.toggle("active", p.id === "tab-" + tabName);
+        }
+        persistSessionUI();
+      }
+
+      for (const btn of document.querySelectorAll(".tab-btn")) {
+        btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+      }
+
+      // Work detail subtabs
+      for (const btn of document.querySelectorAll(".subtab-btn")) {
+        btn.addEventListener("click", () => {
+          for (const b of document.querySelectorAll(".subtab-btn")) {
+            b.classList.remove("active");
+            b.setAttribute("aria-selected", "false");
+          }
+          btn.classList.add("active");
+          btn.setAttribute("aria-selected", "true");
+          selectedWorkDoc = btn.dataset.doc;
+          renderSelectedWorkDoc();
+        });
+      }
+
+      // OAuth Pending requests (preserving scope selections across polling)
+      function renderPendingOAuth(oauth) {
+        const list = (oauth && oauth.pendingRequests) || [];
+        const box = $("pending-oauth-box");
+        const container = $("pending-oauth-list");
+
+        const activeIds = new Set(list.map((i) => i.id));
+        for (const existingId of pendingScopeDrafts.keys()) {
+          if (!activeIds.has(existingId)) pendingScopeDrafts.delete(existingId);
+        }
+        for (const item of list) {
+          if (!pendingScopeDrafts.has(item.id)) {
+            pendingScopeDrafts.set(item.id, new Set(item.scopes || []));
+          }
+        }
+
+        const sig = JSON.stringify(list.map((i) => ({
+          id: i.id,
+          clientId: i.clientId,
+          clientName: i.clientName,
+          displayCode: i.displayCode,
+          redirectUri: i.redirectUri,
+          scopes: i.scopes || [],
+        })));
+        if (sig === lastPendingSig) return;
+        lastPendingSig = sig;
+
+        if (!list.length) {
+          box.hidden = true;
+          container.innerHTML = "";
+          return;
+        }
+        box.hidden = false;
+        container.innerHTML = list.map((item) => {
+          const selectedSet = pendingScopeDrafts.get(item.id) || new Set(item.scopes || []);
+          const checks = (item.scopes || []).map((scope) => {
+            const desc = (oauth.scopeDescriptions && oauth.scopeDescriptions[scope]) || "";
+            const isChecked = selectedSet.has(scope) ? " checked" : "";
+            return "<label class=\"scope-item\"><input type=\"checkbox\" name=\"scope\" value=\"" + escHtml(scope) + "\"" + isChecked + "> <div><code>" + escHtml(scope) + "</code><div class=\"muted\">" + escHtml(desc) + "</div></div></label>";
+          }).join("");
+          return "<div class=\"card\" style=\"margin-bottom:10px\">" +
+            "<div class=\"card-header\"><h3>" + escHtml(item.clientName) + "</h3><span class=\"badge warn\">Código: " + escHtml(item.displayCode) + "</span></div>" +
+            "<p class=\"muted\" style=\"margin:4px 0\">Client ID: <code>" + escHtml(item.clientId) + "</code> · Redirect: <code>" + escHtml(item.redirectUri) + "</code></p>" +
+            "<form method=\"post\" action=\"/decision\" class=\"pending-oauth-form\" data-pending-id=\"" + escHtml(item.id) + "\">" +
+            "<input type=\"hidden\" name=\"csrf\" value=\"" + escHtml(csrf) + "\">" +
+            "<input type=\"hidden\" name=\"id\" value=\"" + escHtml(item.id) + "\">" +
+            "<div class=\"scope-grid\">" + checks + "</div>" +
+            "<div class=\"flex-row\" style=\"margin-top:10px\">" +
+            "<button type=\"submit\" name=\"decision\" value=\"approve\" class=\"primary\">Aprovar acesso selecionado</button>" +
+            "<button type=\"submit\" name=\"decision\" value=\"deny\" class=\"danger\">Negar</button>" +
+            "</div></form></div>";
+        }).join("");
+      }
+
+      $("pending-oauth-list").addEventListener("change", (e) => {
+        const target = e.target;
+        if (!target || target.name !== "scope") return;
+        const form = target.closest(".pending-oauth-form");
+        if (!form) return;
+        const id = form.dataset.pendingId;
+        const set = pendingScopeDrafts.get(id) || new Set();
+        if (target.checked) set.add(target.value);
+        else set.delete(target.value);
+        pendingScopeDrafts.set(id, set);
+      });
+
+      $("pending-oauth-list").addEventListener("click", (e) => {
+        const btn = e.target && e.target.closest("button[type=\"submit\"][name=\"decision\"]");
+        if (!btn) return;
+        const form = btn.closest("form");
+        if (form) form.dataset.clickedDecision = btn.value;
+      });
+
+      $("pending-oauth-list").addEventListener("submit", (e) => {
+        const form = e.target;
+        if (!form || !form.classList.contains("pending-oauth-form")) return;
+        if (form.dataset.submitting === "1") {
+          e.preventDefault();
+          return;
+        }
+        const decision = (e.submitter && e.submitter.value) || form.dataset.clickedDecision || "approve";
+        if (decision === "approve") {
+          const checked = form.querySelectorAll("input[name=\"scope\"]:checked");
+          if (!checked.length) {
+            e.preventDefault();
+            showBanner("Selecione pelo menos um escopo antes de aprovar a solicitação OAuth.", "error");
+            const firstScope = form.querySelector("input[name=\"scope\"]");
+            if (firstScope) firstScope.focus();
+            return;
+          }
+        }
+        form.dataset.submitting = "1";
+        let hiddenDecision = form.querySelector("input[type=\"hidden\"][name=\"decision\"]");
+        if (!hiddenDecision) {
+          hiddenDecision = document.createElement("input");
+          hiddenDecision.type = "hidden";
+          hiddenDecision.name = "decision";
+          form.appendChild(hiddenDecision);
+        }
+        hiddenDecision.value = decision;
+        for (const btn of form.querySelectorAll("button[type=\"submit\"]")) btn.disabled = true;
+        if (selectedWorkId && formBoundWorkId === selectedWorkId) syncDraftFromInputs(selectedWorkId);
+        persistSessionDrafts();
+        persistSessionUI();
+      });
+
+      // Guidance and Status helpers
+      function guidanceLabel(status) {
+        if (status === "unregistered") return { text: "Não registrado", cls: "warn" };
+        if (status === "ready") return { text: "Pronto para retomada", cls: "ok" };
+        if (status === "checkpoint_recommended") return { text: "Checkpoint recomendado", cls: "warn" };
+        if (status === "closed") return { text: "Encerrado", cls: "" };
+        return { text: status || "Desconhecido", cls: "" };
+      }
+
+      function reasonLabel(reason) {
+        if (reason === "recent_activity") return "atividade recente sem checkpoint correspondente";
+        if (reason === "review_age") return "tempo decorrido desde a última atualização";
+        if (reason === "no_matching_work") return "nenhum trabalho registrado para esta pasta";
+        return reason || "";
+      }
+
+      function continuationSourceLabel(src) {
+        if (!src) return "—";
+        const val = typeof src === "string" ? src : (src.source || src.type || src.label || "");
+        if (val === "context") return "Contexto (context.md)";
+        if (val === "handoff") return "Handoff (handoff.md)";
+        if (val === "compact") return "Compactação (compact.md)";
+        return String(val || "—");
+      }
+
+      function getSelectableWebConnections() {
+        const works = (state && state.works) || {};
+        if (Array.isArray(works.activeWebConnections)) {
+          return works.activeWebConnections;
+        }
+        const grants = (state && state.oauth && state.oauth.activeGrants) || [];
+        return grants
+          .filter((g) => Array.isArray(g.scopes) && g.scopes.includes("works:read"))
+          .map((g) => ({ connectionId: g.connectionId, clientName: g.clientName, active: null }));
+      }
+
+      function connectionActiveWorkId(conn, fallbackWebId) {
+        if (!conn) return null;
+        if (typeof conn.active === "string") return conn.active;
+        if (conn.active && typeof conn.active === "object" && conn.active.workId) return conn.active.workId;
+        if (conn.workId) return conn.workId;
+        if (conn.active === true) return fallbackWebId || true;
+        return null;
+      }
+
+      // Project Discovery and Registration (Improvement 7)
+      function syncProjectRootsUI(roots) {
+        const list = Array.isArray(roots) ? roots : [];
+        const sig = JSON.stringify(list);
+        if (sig === lastProjectRootsSig) return;
+        lastProjectRootsSig = sig;
+        $("workspace-roots-datalist").innerHTML = list.map((r) => "<option value=\"" + escHtml(r) + "\"></option>").join("");
+        const quickBox = $("project-quick-roots");
+        if (!list.length) {
+          quickBox.innerHTML = "";
+        } else {
+          quickBox.innerHTML = "<span class=\"muted\" style=\"font-size:12px\">Pastas autorizadas:</span> " +
+            list.map((r) => "<button type=\"button\" class=\"small quick-root-btn\" data-root=\"" + escHtml(r) + "\">" + escHtml(r) + "</button>").join("");
+        }
+        if (!$("project-cwd-input").value.trim() && list[0]) {
+          $("project-cwd-input").value = list[0];
+        }
+      }
+
+      $("project-quick-roots").addEventListener("click", (e) => {
+        const btn = e.target && e.target.closest(".quick-root-btn");
+        if (!btn) return;
+        $("project-cwd-input").value = btn.dataset.root || "";
+        void discoverProject($("project-cwd-input").value);
+      });
+
+      $("btn-discover-project").addEventListener("click", () => {
+        void discoverProject($("project-cwd-input").value);
+      });
+
+      $("project-cwd-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          void discoverProject($("project-cwd-input").value);
+        }
+      });
+
+      async function discoverProject(rawCwd) {
+        const cwd = String(rawCwd || "").trim();
+        const box = $("project-discovery-result");
+        if (!cwd) {
+          box.hidden = false;
+          box.innerHTML = "<div class=\"alert-box warn\" role=\"alert\">Informe o caminho da pasta para verificar ou registrar na continuidade.</div>";
+          return;
+        }
+        const seq = ++projectSeq;
+        if (projectController) projectController.abort();
+        projectController = new AbortController();
+
+        box.hidden = false;
+        box.innerHTML = "<p class=\"muted\">Verificando projeto em <code>" + escHtml(cwd) + "</code>…</p>";
+        try {
+          const data = await fetchJson("/api/project?cwd=" + encodeURIComponent(cwd), { signal: projectController.signal });
+          if (seq !== projectSeq) return;
+          renderProjectDiscovery(data);
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (seq !== projectSeq) return;
+          box.innerHTML = "<div class=\"alert-box err\" role=\"alert\"><strong>Falha ao verificar pasta:</strong> " + escHtml(err.message || "Erro desconhecido") + "</div>";
+        }
+      }
+
+      function renderProjectDiscovery(data) {
+        const box = $("project-discovery-result");
+        const cont = data.continuity || {};
+        const status = cont.status || "unregistered";
+        const badge = guidanceLabel(status);
+        const guidance = cont.guidance || {};
+        const reason = reasonLabel(guidance.reason || cont.reason || (status === "unregistered" ? "no_matching_work" : ""));
+        const lastAt = guidance.lastUpdatedAt ? (" · Última atualização: " + formatDate(guidance.lastUpdatedAt)) : "";
+        const works = cont.works || [];
+
+        let guidanceMsg = "";
+        if (status === "unregistered") {
+          guidanceMsg = "Nenhum trabalho de continuidade encontrado para esta pasta. Registre explicitamente o projeto abaixo para começar a compartilhar contexto entre Web e Agent.";
+        } else if (status === "ready") {
+          guidanceMsg = "Projeto já registrado e pronto para retomada. Selecione um trabalho abaixo para abrir, ativar ou criar novo checkpoint.";
+        } else if (status === "checkpoint_recommended") {
+          guidanceMsg = "Há trabalho registrado, mas recomenda-se salvar um novo checkpoint antes de trocar de cliente ou encerrar a sessão.";
+        } else if (status === "closed") {
+          guidanceMsg = "Os trabalhos desta pasta estão encerrados. Você pode inspecionar o histórico ou registrar um novo trabalho para um novo ciclo.";
+        }
+
+        const worksHtml = works.length
+          ? "<div class=\"item-list\" style=\"margin-top:8px\">" + works.map((w) => {
+              const wg = w.guidance && w.guidance.status ? guidanceLabel(w.guidance.status) : null;
+              return "<div class=\"history-item\" style=\"display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px\">" +
+                "<div><strong>" + escHtml(w.title || w.workId) + "</strong> <code>" + escHtml(w.workId) + "</code> " +
+                "<span class=\"badge\">rev " + escHtml(w.revision ?? "—") + "</span> " +
+                "<span class=\"badge\">" + escHtml(w.status || "—") + "</span>" +
+                (wg ? (" <span class=\"badge " + wg.cls + "\">" + escHtml(wg.text) + "</span>") : "") +
+                "</div>" +
+                "<div class=\"flex-row\">" +
+                "<button type=\"button\" class=\"small primary proj-open-work\" data-work-id=\"" + escHtml(w.workId) + "\">Abrir no painel</button>" +
+                "<button type=\"button\" class=\"small proj-activate-agent\" data-work-id=\"" + escHtml(w.workId) + "\">Ativar Agent</button>" +
+                "</div></div>";
+            }).join("") + "</div>"
+          : "";
+
+        const showCreate = status === "unregistered" || status === "closed";
+        const defaultTitle = cont.suggestedTitle || cont.suggestedWorkId || "";
+        const createHtml = showCreate
+          ? "<div class=\"card\" style=\"margin-top:10px;margin-bottom:0;background:var(--bg-muted)\">" +
+            "<div class=\"card-header\" style=\"margin-bottom:8px\"><h3>" + (status === "closed" ? "Iniciar novo trabalho nesta pasta" : "Registrar projeto na continuidade") + "</h3></div>" +
+            "<div class=\"two-col\">" +
+            "<div class=\"field-row\"><label for=\"create-work-root\">Pasta raiz (root)</label><input type=\"text\" id=\"create-work-root\" value=\"" + escHtml(data.cwd || "") + "\"></div>" +
+            "<div class=\"field-row\"><label for=\"create-work-title\">Título do projeto</label><input type=\"text\" id=\"create-work-title\" value=\"" + escHtml(defaultTitle) + "\" placeholder=\"Ex.: Painel vContinuity\"></div>" +
+            "</div>" +
+            "<div class=\"field-row\"><label for=\"create-work-goal\">Objetivo inicial</label><input type=\"text\" id=\"create-work-goal\" placeholder=\"Descreva o objetivo principal deste trabalho\"></div>" +
+            "<div id=\"create-work-error\" class=\"alert-box err\" role=\"alert\" hidden></div>" +
+            "<button id=\"btn-create-work\" type=\"button\" class=\"primary\">Registrar trabalho</button>" +
+            "</div>"
+          : "";
+
+        box.hidden = false;
+        box.innerHTML = "<div class=\"alert-box " + (badge.cls || "info") + "\" style=\"margin-bottom:0\">" +
+          "<div class=\"flex-row\" style=\"justify-content:space-between\">" +
+          "<div><span class=\"badge " + badge.cls + "\">" + escHtml(badge.text) + "</span> <code>" + escHtml(data.cwd || "") + "</code></div>" +
+          (reason ? ("<span class=\"muted\" style=\"font-size:12px\">Motivo: " + escHtml(reason) + escHtml(lastAt) + "</span>") : "") +
+          "</div>" +
+          "<p style=\"margin:6px 0 0\">" + escHtml(guidanceMsg) + "</p>" +
+          worksHtml +
+          createHtml +
+          "</div>";
+      }
+
+      $("project-discovery-result").addEventListener("click", async (e) => {
+        const openBtn = e.target && e.target.closest(".proj-open-work");
+        if (openBtn) {
+          const wId = openBtn.dataset.workId;
+          if (wId) {
+            selectWork(wId);
+          }
+          return;
+        }
+        const actBtn = e.target && e.target.closest(".proj-activate-agent");
+        if (actBtn) {
+          const wId = actBtn.dataset.workId;
+          if (!wId) return;
+          await withActionLock("activate-proj-" + wId, actBtn, async () => {
+            try {
+              await apiAction({ action: "work_activate", surface: "agent", workId: wId });
+              showBanner("Trabalho \"" + wId + "\" definido como ativo no Agent.", "ok");
+              selectWork(wId);
+              await refreshOverview(true);
+            } catch (err) {
+              showBanner("Falha ao ativar trabalho: " + err.message, "error");
+            }
+          });
+          return;
+        }
+        const createBtn = e.target && e.target.closest("#btn-create-work");
+        if (createBtn) {
+          const root = ($("create-work-root") && $("create-work-root").value.trim()) || "";
+          const title = ($("create-work-title") && $("create-work-title").value.trim()) || "";
+          const goal = ($("create-work-goal") && $("create-work-goal").value.trim()) || "";
+          setBoxError("create-work-error", "");
+          if (!root || !title) {
+            setBoxError("create-work-error", "Preencha a pasta raiz e o título para registrar o projeto.");
+            return;
+          }
+          await withActionLock("work_create", createBtn, async () => {
+            try {
+              const res = await apiAction({ action: "work_create", root, title, goal: goal || title });
+              const newId = res.work && res.work.workId;
+              showBanner("Trabalho \"" + (newId || title) + "\" registrado com sucesso.", "ok");
+              if (newId) selectWork(newId);
+              await refreshOverview(true);
+              await discoverProject(root);
+            } catch (err) {
+              setBoxError("create-work-error", "Erro ao registrar projeto: " + err.message);
+              showBanner("Erro ao registrar projeto: " + err.message, "error");
+            }
+          });
+        }
+      });
+
+      // Works list rendering
+      function renderWorks(worksData, { allowAutoSelect = true } = {}) {
+        const data = worksData || {};
+        $("works-count-badge").textContent = String(data.count || 0);
+        const activeWebId = (data.activeWeb && data.activeWeb.workId) || null;
+        const activeAgentId = (data.activeAgent && data.activeAgent.workId) || null;
+        $("kpi-active-work").textContent = activeAgentId || activeWebId || "Nenhum";
+        $("kpi-active-work-sub").textContent = "Web: " + (activeWebId || "—") + " · Agent: " + (activeAgentId || "—");
+
+        const items = data.works || [];
+        const conns = getSelectableWebConnections();
+        renderWebConnectionSelector(conns, activeWebId);
+
+        if (!items.length) {
+          if (lastWorksSig !== "EMPTY") {
+            lastWorksSig = "EMPTY";
+            $("works-list").innerHTML = "<p class=\"muted\">Nenhum Work Context criado.</p>";
+          }
+          return;
+        }
+        if (selectedWorkId && !items.some((w) => w.workId === selectedWorkId)) {
+          selectedWorkId = null;
+          formBoundWorkId = null;
+          needsInitialWorkLoad = false;
+        }
+        if (allowAutoSelect) {
+          if (!selectedWorkId && items[0]) {
+            selectWork(activeAgentId || activeWebId || items[0].workId);
+            return;
+          }
+          if (needsInitialWorkLoad && selectedWorkId) {
+            needsInitialWorkLoad = false;
+            selectWork(selectedWorkId);
+            return;
+          }
+        }
+
+        const sig = JSON.stringify({
+          selectedWorkId,
+          activeWebId,
+          activeAgentId,
+          conns,
+          items: items.map((w) => ({
+            workId: w.workId,
+            title: w.title,
+            revision: w.revision,
+            status: w.status,
+            phase: w.state && w.state.phase,
+            lastClient: w.lastClient,
+            guidance: w.guidance || null,
+            dirty: Boolean(workDrafts.get(w.workId)?.dirty),
+          })),
+        });
+        if (sig === lastWorksSig) return;
+        lastWorksSig = sig;
+
+        $("works-list").innerHTML = items.map((w) => {
+          const isSel = w.workId === selectedWorkId;
+          const badges = [];
+          if (w.workId === activeWebId) badges.push("<span class=\"badge ok\">Web ativo</span>");
+          if (w.workId === activeAgentId) badges.push("<span class=\"badge ok\">Agent ativo</span>");
+          for (const c of conns) {
+            const cActive = connectionActiveWorkId(c, activeWebId);
+            if (cActive === w.workId) {
+              badges.push("<span class=\"badge accent\">OAuth: " + escHtml(c.clientName || c.connectionId) + "</span>");
+            }
+          }
+          if (w.guidance && w.guidance.status && w.guidance.status !== "ready") {
+            const gb = guidanceLabel(w.guidance.status);
+            badges.push("<span class=\"badge " + gb.cls + "\">" + escHtml(gb.text) + "</span>");
+          }
+          if (workDrafts.get(w.workId)?.dirty) {
+            badges.push("<span class=\"badge warn\">Rascunho</span>");
+          }
+          badges.push("<span class=\"badge\">rev " + escHtml(w.revision) + "</span>");
+          const phase = (w.state && w.state.phase) || w.status;
+          return "<button type=\"button\" class=\"list-item " + (isSel ? "selected" : "") + "\" data-work-id=\"" + escHtml(w.workId) + "\">" +
+            "<div class=\"list-item-title\"><span>" + escHtml(w.title || w.workId) + "</span><div class=\"flex-row\">" + badges.join("") + "</div></div>" +
+            "<div class=\"list-item-meta\"><span>ID: <code>" + escHtml(w.workId) + "</code></span><span>Fase: " + escHtml(phase) + "</span><span>Último: " + escHtml(w.lastClient || "—") + "</span></div>" +
+            "</button>";
+        }).join("");
+      }
+
+      function renderWebConnectionSelector(conns, activeWebId) {
+        const group = $("web-oauth-activate-group");
+        const select = $("web-connection-select");
+        if (!conns || !conns.length) {
+          group.hidden = true;
+          return;
+        }
+        group.hidden = false;
+        const prev = select.value;
+        const optionsHtml = conns.map((c) => {
+          const activeId = connectionActiveWorkId(c, activeWebId);
+          const activeText = typeof activeId === "string" ? ("ativo: " + activeId) : (activeId ? "ativo" : "sem trabalho");
+          return "<option value=\"" + escHtml(c.connectionId) + "\">" +
+            escHtml((c.clientName || "Cliente OAuth") + " (" + c.connectionId + ") — " + activeText) +
+            "</option>";
+        }).join("");
+        if (select.innerHTML !== optionsHtml) {
+          select.innerHTML = optionsHtml;
+          if (prev && conns.some((c) => c.connectionId === prev)) select.value = prev;
+        }
+      }
+
+      $("works-list").addEventListener("click", (e) => {
+        const item = e.target && e.target.closest(".list-item[data-work-id]");
+        if (!item) return;
+        selectWork(item.dataset.workId);
+      });
+
+      function setWorkFormReady(workId, ready) {
+        const card = $("work-update-card");
+        card.dataset.boundWorkId = workId || "";
+        const isLocked = workId ? busyLocks.has("work-save-" + workId) : true;
+        const allowEdit = Boolean(ready && workId && formBoundWorkId === workId && !isLocked);
+        for (const id of ["wf-phase", "wf-to-client", "wf-summary", "wf-next", "wf-tests", "wf-revalidate", "btn-save-checkpoint", "btn-save-handoff", "btn-close-work", "btn-discard-draft"]) {
+          const el = $(id);
+          if (el) {
+            el.disabled = !allowEdit;
+            if (!ready && workId === null) el.setAttribute("aria-busy", "true");
+            else el.removeAttribute("aria-busy");
+          }
+        }
+      }
+
+      function selectWork(workId) {
+        if (!workId) return;
+        if (formBoundWorkId && formBoundWorkId !== workId) {
+          syncDraftFromInputs(formBoundWorkId);
+        }
+        selectedWorkId = workId;
+        needsInitialWorkLoad = false;
+        persistSessionUI();
+        setBoxError("work-detail-error", "");
+        setBoxError("work-update-error", "");
+
+        const existingDraft = workDrafts.get(workId);
+        if (existingDraft) {
+          formBoundWorkId = workId;
+          $("work-update-card").hidden = false;
+          applyDraftToInputs(existingDraft);
+          renderDraftStateUI(workId);
+          setWorkFormReady(workId, true);
+        } else {
+          formBoundWorkId = null;
+          $("wf-phase").value = "";
+          $("wf-summary").value = "";
+          $("wf-next").value = "";
+          $("wf-tests").value = "";
+          $("wf-revalidate").value = "";
+          $("work-draft-badge").className = "badge";
+          $("work-draft-badge").textContent = "Carregando revisão…";
+          $("btn-discard-draft").hidden = true;
+          $("work-server-update-notice").hidden = true;
+          $("work-conflict-box").hidden = true;
+          setWorkFormReady(null, false);
+        }
+
+        renderWorks(state && state.works ? state.works : { works: [] }, { allowAutoSelect: false });
+        void loadWorkDetail(workId);
+      }
+
+      // Work Drafts and Revision Conflict Handling (Improvements 1 and 3)
+      function extractFormBase(data) {
+        const st = (data && data.state) || {};
+        const sum = (data && data.summary) || {};
+        const hasSummaryState = sum.currentState !== undefined && sum.currentState !== null;
+        const nextArr = Array.isArray(sum.nextSteps) ? sum.nextSteps : (Array.isArray(st.nextActions) ? st.nextActions : []);
+        const testsArr = Array.isArray(sum.tests) ? sum.tests : (Array.isArray(st.tests) ? st.tests : []);
+        const revalArr = Array.isArray(sum.revalidate) ? sum.revalidate : (Array.isArray(st.revalidate) ? st.revalidate : []);
+        return {
+          phase: st.phase || "active",
+          summary: hasSummaryState ? String(sum.currentState) : String(st.currentTask ?? ""),
+          next: toLines(nextArr),
+          tests: toLines(testsArr),
+          revalidate: toLines(revalArr),
+        };
+      }
+
+      function computeDirty(draft) {
+        const b = draft.base;
+        const c = draft.current;
+        return c.phase !== b.phase ||
+          c.summary !== b.summary ||
+          c.next !== b.next ||
+          c.tests !== b.tests ||
+          c.revalidate !== b.revalidate;
+      }
+
+      function applyDraftToInputs(draft) {
+        $("wf-phase").value = draft.current.phase;
+        $("wf-summary").value = draft.current.summary;
+        $("wf-next").value = draft.current.next;
+        $("wf-tests").value = draft.current.tests;
+        $("wf-revalidate").value = draft.current.revalidate;
+      }
+
+      function syncDraftFromInputs(workId) {
+        if (!workId || formBoundWorkId !== workId) return workDrafts.get(workId) || null;
+        const draft = workDrafts.get(workId);
+        if (!draft) return null;
+        draft.current = {
+          phase: $("wf-phase").value,
+          summary: $("wf-summary").value,
+          next: $("wf-next").value,
+          tests: $("wf-tests").value,
+          revalidate: $("wf-revalidate").value,
+        };
+        draft.dirty = computeDirty(draft);
+        persistSessionDrafts();
+        return draft;
+      }
+
+      function renderDraftStateUI(workId) {
+        if (!workId || selectedWorkId !== workId || formBoundWorkId !== workId) return;
+        const draft = workDrafts.get(workId);
+        if (!draft) return;
+        const badge = $("work-draft-badge");
+        const discardBtn = $("btn-discard-draft");
+        if (draft.dirty) {
+          badge.className = "badge warn";
+          badge.textContent = "Rascunho não salvo (base rev " + draft.baseRevision + ")";
+          discardBtn.hidden = false;
+        } else {
+          badge.className = "badge ok";
+          badge.textContent = "Sincronizado (base rev " + draft.baseRevision + ")";
+          discardBtn.hidden = true;
+        }
+
+        const srvNotice = $("work-server-update-notice");
+        if (draft.dirty && draft.serverUpdatedNotice && !draft.conflict) {
+          const n = draft.serverUpdatedNotice;
+          srvNotice.hidden = false;
+          srvNotice.innerHTML =
+            "<strong>Atualização remota detectada:</strong> a revisão no servidor avançou da base <code>" + escHtml(draft.baseRevision) +
+            "</code> para <code>" + escHtml(n.revision) + "</code> (" + escHtml(n.lastClient) + " em " + escHtml(formatDate(n.updatedAt)) + "). " +
+            "Seu rascunho foi preservado." +
+            "<div class=\"flex-row\" style=\"margin-top:8px\">" +
+            "<button type=\"button\" class=\"small\" id=\"btn-notice-reload\">Recarregar versão atual (descartar rascunho)</button>" +
+            "<button type=\"button\" class=\"small\" id=\"btn-notice-keep\">Manter meu rascunho</button>" +
+            "</div>";
+        } else {
+          srvNotice.hidden = true;
+          srvNotice.innerHTML = "";
+        }
+
+        const conflictBox = $("work-conflict-box");
+        if (draft.conflict) {
+          const cf = draft.conflict;
+          const srvData = cf.serverData;
+          const srvBase = srvData ? extractFormBase(srvData) : null;
+          const srvRev = cf.currentRevision ?? (srvData && srvData.work && srvData.work.revision) ?? "?";
+          const srvClient = (srvData && srvData.work && srvData.work.lastClient) || "outro cliente";
+
+          conflictBox.hidden = false;
+          conflictBox.innerHTML =
+            "<strong>Conflito de revisão (HTTP 409 · WORK_REVISION_CONFLICT):</strong> " +
+            "sua alteração partiu da revisão base <code>" + escHtml(draft.baseRevision) + "</code>, mas o servidor já está na revisão <code>" + escHtml(srvRev) + "</code> (por <code>" + escHtml(srvClient) + "</code>). " +
+            "Seu rascunho foi preservado abaixo." +
+            (srvBase ? (
+              "<div class=\"compare-grid\" style=\"margin-top:8px\">" +
+              "<div class=\"compare-pane\"><h4>Seu rascunho (base rev " + escHtml(draft.baseRevision) + ")</h4>" +
+              "<div class=\"muted\" style=\"font-size:12px\">Fase: <code>" + escHtml(draft.current.phase) + "</code></div>" +
+              "<pre>" + escHtml((draft.current.summary || "(vazio)") + "\n\nPróximos passos:\n" + (draft.current.next || "(vazio)")) + "</pre></div>" +
+              "<div class=\"compare-pane\"><h4>Versão no servidor (rev " + escHtml(srvRev) + ")</h4>" +
+              "<div class=\"muted\" style=\"font-size:12px\">Fase: <code>" + escHtml(srvBase.phase) + "</code></div>" +
+              "<pre>" + escHtml((srvBase.summary || "(vazio)") + "\n\nPróximos passos:\n" + (srvBase.next || "(vazio)")) + "</pre></div>" +
+              "</div>"
+            ) : "") +
+            "<div class=\"flex-row\" style=\"margin-top:10px\">" +
+            "<button type=\"button\" class=\"small\" id=\"btn-conflict-reload\">Recarregar versão do servidor (descartar rascunho)</button>" +
+            "<button type=\"button\" class=\"small primary\" id=\"btn-conflict-rebase\">Adotar revisão " + escHtml(srvRev) + " como base e revisar</button>" +
+            "<button type=\"button\" class=\"small\" id=\"btn-conflict-dismiss\">Fechar aviso (manter rascunho)</button>" +
+            "</div>";
+        } else {
+          conflictBox.hidden = true;
+          conflictBox.innerHTML = "";
+        }
+      }
+
+      for (const fieldId of ["wf-phase", "wf-summary", "wf-next", "wf-tests", "wf-revalidate"]) {
+        $(fieldId).addEventListener("input", () => {
+          if (!selectedWorkId || formBoundWorkId !== selectedWorkId) return;
+          syncDraftFromInputs(selectedWorkId);
+          renderDraftStateUI(selectedWorkId);
+        });
+      }
+
+      $("btn-discard-draft").addEventListener("click", () => {
+        const workId = selectedWorkId;
+        if (!workId || formBoundWorkId !== workId || !selectedWorkData || selectedWorkData.work?.workId !== workId) return;
+        const freshBase = extractFormBase(selectedWorkData);
+        workDrafts.set(workId, {
+          workId,
+          baseRevision: selectedWorkData.work.revision,
+          base: freshBase,
+          current: { ...freshBase },
+          dirty: false,
+          serverUpdatedNotice: null,
+          conflict: null,
+        });
+        persistSessionDrafts();
+        applyDraftToInputs(workDrafts.get(workId));
+        renderDraftStateUI(workId);
+        setBoxError("work-update-error", "");
+        showBanner("Rascunho descartado; campos restaurados para a revisão " + selectedWorkData.work.revision + ".", "info");
+      });
+
+      $("work-server-update-notice").addEventListener("click", (e) => {
+        const workId = selectedWorkId;
+        if (!workId || formBoundWorkId !== workId) return;
+        const draft = workDrafts.get(workId);
+        if (!draft) return;
+        if (e.target && e.target.id === "btn-notice-reload" && selectedWorkData && selectedWorkData.work?.workId === workId) {
+          const freshBase = extractFormBase(selectedWorkData);
+          workDrafts.set(workId, {
+            workId,
+            baseRevision: selectedWorkData.work.revision,
+            base: freshBase,
+            current: { ...freshBase },
+            dirty: false,
+            serverUpdatedNotice: null,
+            conflict: null,
+          });
+          persistSessionDrafts();
+          applyDraftToInputs(workDrafts.get(workId));
+          renderDraftStateUI(workId);
+        } else if (e.target && e.target.id === "btn-notice-keep") {
+          draft.serverUpdatedNotice = null;
+          renderDraftStateUI(workId);
+        }
+      });
+
+      $("work-conflict-box").addEventListener("click", (e) => {
+        const workId = selectedWorkId;
+        if (!workId || formBoundWorkId !== workId) return;
+        const draft = workDrafts.get(workId);
+        if (!draft || !draft.conflict) return;
+        const srvData = draft.conflict.serverData || (selectedWorkData && selectedWorkData.work?.workId === workId ? selectedWorkData : null);
+        if (e.target && e.target.id === "btn-conflict-reload") {
+          if (srvData) {
+            const freshBase = extractFormBase(srvData);
+            workDrafts.set(workId, {
+              workId,
+              baseRevision: srvData.work.revision,
+              base: freshBase,
+              current: { ...freshBase },
+              dirty: false,
+              serverUpdatedNotice: null,
+              conflict: null,
+            });
+            persistSessionDrafts();
+            applyDraftToInputs(workDrafts.get(workId));
+            renderDraftStateUI(workId);
+            setBoxError("work-update-error", "");
+            showBanner("Versão do servidor (revisão " + srvData.work.revision + ") carregada.", "ok");
+          } else {
+            workDrafts.delete(workId);
+            persistSessionDrafts();
+            formBoundWorkId = null;
+            void loadWorkDetail(workId);
+          }
+        } else if (e.target && e.target.id === "btn-conflict-rebase") {
+          const targetRev = draft.conflict.currentRevision || (srvData && srvData.work && srvData.work.revision);
+          const srvBase = srvData ? extractFormBase(srvData) : draft.base;
+          const edited = {
+            phase: draft.current.phase !== draft.base.phase,
+            summary: draft.current.summary !== draft.base.summary,
+            next: draft.current.next !== draft.base.next,
+            tests: draft.current.tests !== draft.base.tests,
+            revalidate: draft.current.revalidate !== draft.base.revalidate,
+          };
+          draft.baseRevision = targetRev;
+          draft.base = { ...srvBase };
+          if (!edited.phase) draft.current.phase = srvBase.phase;
+          if (!edited.summary) draft.current.summary = srvBase.summary;
+          if (!edited.next) draft.current.next = srvBase.next;
+          if (!edited.tests) draft.current.tests = srvBase.tests;
+          if (!edited.revalidate) draft.current.revalidate = srvBase.revalidate;
+          draft.dirty = computeDirty(draft);
+          draft.conflict = null;
+          draft.serverUpdatedNotice = null;
+          persistSessionDrafts();
+          applyDraftToInputs(draft);
+          renderDraftStateUI(workId);
+          setBoxError("work-update-error", "");
+          showBanner("Base atualizada para revisão " + targetRev + ". Revise os campos antes de salvar novamente.", "warn");
+        } else if (e.target && e.target.id === "btn-conflict-dismiss") {
+          draft.conflict = null;
+          persistSessionDrafts();
+          renderDraftStateUI(workId);
+        }
+      });
+
+      function buildWorkActionPayload(actionName, workId) {
+        if (formBoundWorkId !== workId) {
+          throw new Error("O formulário ainda está carregando outro projeto; aguarde antes de salvar.");
+        }
+        const draft = syncDraftFromInputs(workId);
+        if (!draft) {
+          throw new Error("Rascunho base indisponível para \"" + workId + "\".");
+        }
+        const payload = {
+          action: actionName,
+          workId,
+          expectedRevision: draft.baseRevision,
+        };
+        if (actionName === "work_handoff") {
+          payload.toClient = $("wf-to-client").value.trim() || "codex-desktop";
+        }
+        if (draft.current.phase !== draft.base.phase) payload.phase = draft.current.phase;
+        if (draft.current.summary !== draft.base.summary) payload.summary = draft.current.summary;
+        if (draft.current.next !== draft.base.next) payload.nextSteps = parseLines(draft.current.next);
+        if (draft.current.tests !== draft.base.tests) payload.tests = parseLines(draft.current.tests);
+        if (draft.current.revalidate !== draft.base.revalidate) payload.revalidate = parseLines(draft.current.revalidate);
+        return payload;
+      }
+
+      async function handleWorkSaveError(err, workId) {
+        const isCurrent = selectedWorkId === workId && formBoundWorkId === workId;
+        if (err && (err.status === 409 || err.code === "WORK_REVISION_CONFLICT" || /WORK_REVISION_CONFLICT/.test(err.message || ""))) {
+          let latestData = null;
+          try {
+            latestData = await fetchJson("/api/work?workId=" + encodeURIComponent(workId));
+            if (selectedWorkId === workId) selectedWorkData = latestData;
+          } catch {}
+          const draft = workDrafts.get(workId);
+          if (draft) {
+            draft.conflict = {
+              currentRevision: (err.data && err.data.currentRevision) || (latestData && latestData.work && latestData.work.revision) || "?",
+              error: err.message,
+              serverData: latestData,
+            };
+            persistSessionDrafts();
+            if (selectedWorkId === workId && formBoundWorkId === workId) renderDraftStateUI(workId);
+          }
+          if (isCurrent) setBoxError("work-update-error", "Conflito de revisão (409): " + err.message);
+          showBanner("Conflito de revisão (409) em \"" + workId + "\": seu rascunho foi preservado para revisão.", "error");
+          return;
+        }
+        if (isCurrent) setBoxError("work-update-error", err.message || "Falha ao atualizar trabalho.");
+        showBanner("Erro ao salvar \"" + workId + "\": " + (err.message || "Falha desconhecida"), "error");
+      }
+
+      // Work Detail Loading and Rendering (Improvement 4)
+      async function loadWorkDetail(workId) {
+        if (!workId) return;
+        const seq = ++workDetailSeq;
+        if (workDetailController) workDetailController.abort();
+        workDetailController = new AbortController();
+
+        try {
+          const data = await fetchJson("/api/work?workId=" + encodeURIComponent(workId), { signal: workDetailController.signal });
+          if (seq !== workDetailSeq || workId !== selectedWorkId) return;
+
+          setBoxError("work-detail-error", "");
+          selectedWorkData = data;
+          $("work-detail-title").textContent = (data.work.title || data.work.workId) + " (" + data.work.workId + ")";
+          $("work-detail-actions").hidden = false;
+          $("work-doc-tabs").hidden = false;
+          $("work-update-card").hidden = false;
+
+          const activeConns = getSelectableWebConnections()
+            .filter((c) => connectionActiveWorkId(c, state?.works?.activeWeb?.workId) === data.work.workId)
+            .map((c) => c.clientName || c.connectionId);
+
+          $("work-detail-meta").innerHTML =
+            "Revisão <strong>" + escHtml(data.work.revision) + "</strong> · " +
+            "Status: <strong>" + escHtml(data.work.status) + "</strong> · " +
+            "Fase: <code>" + escHtml((data.state && data.state.phase) || "active") + "</code> · " +
+            "Raiz: <code>" + escHtml(data.work.root || "—") + "</code> · " +
+            "Origem: <span class=\"badge accent\">" + escHtml(continuationSourceLabel(data.continuationSource)) + "</span> · " +
+            "Atualizado em " + escHtml(formatDate(data.work.updatedAt)) + " por <code>" + escHtml(data.work.lastClient || "—") + "</code>" +
+            (activeConns.length ? (" · Ativo em OAuth: <strong>" + escHtml(activeConns.join(", ")) + "</strong>") : "");
+
+          renderWorkGuidance(data.guidance);
+          renderWorkSummary(data);
+
+          // Draft reconciliation with form identity check (never read stale inputs from another work)
+          let draft = workDrafts.get(workId);
+          const freshBase = extractFormBase(data);
+          if (!draft) {
+            draft = {
+              workId,
+              baseRevision: data.work.revision,
+              base: freshBase,
+              current: { ...freshBase },
+              dirty: false,
+              serverUpdatedNotice: null,
+              conflict: null,
+            };
+            workDrafts.set(workId, draft);
+            formBoundWorkId = workId;
+            applyDraftToInputs(draft);
+          } else if (formBoundWorkId !== workId) {
+            // Existing draft loaded when switching works: bind and hydrate inputs WITHOUT reading stale DOM
+            formBoundWorkId = workId;
+            if (draft.conflict && !draft.conflict.serverData) {
+              draft.conflict.serverData = data;
+            }
+            if (!draft.dirty && !draft.conflict) {
+              const changed = draft.baseRevision !== data.work.revision || JSON.stringify(draft.base) !== JSON.stringify(freshBase);
+              if (changed) {
+                draft.baseRevision = data.work.revision;
+                draft.base = freshBase;
+                draft.current = { ...freshBase };
+                draft.serverUpdatedNotice = null;
+              }
+            } else if (draft.dirty && data.work.revision !== draft.baseRevision) {
+              draft.serverUpdatedNotice = {
+                revision: data.work.revision,
+                lastClient: data.work.lastClient || "outro cliente",
+                updatedAt: data.work.updatedAt,
+              };
+            }
+            applyDraftToInputs(draft);
+          } else {
+            syncDraftFromInputs(workId);
+            if (draft.conflict && !draft.conflict.serverData) {
+              draft.conflict.serverData = data;
+            }
+            if (!draft.dirty) {
+              const changed = draft.baseRevision !== data.work.revision || JSON.stringify(draft.base) !== JSON.stringify(freshBase);
+              if (changed) {
+                draft.baseRevision = data.work.revision;
+                draft.base = freshBase;
+                draft.current = { ...freshBase };
+                draft.serverUpdatedNotice = null;
+                applyDraftToInputs(draft);
+              }
+            } else if (data.work.revision !== draft.baseRevision) {
+              draft.serverUpdatedNotice = {
+                revision: data.work.revision,
+                lastClient: data.work.lastClient || "outro cliente",
+                updatedAt: data.work.updatedAt,
+              };
+            }
+          }
+          setWorkFormReady(workId, true);
+          renderDraftStateUI(workId);
+          populateCheckpointSelectors(data);
+          renderSelectedWorkDoc();
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (seq !== workDetailSeq) return;
+          setBoxError("work-detail-error", "Erro ao carregar detalhes de \"" + workId + "\": " + (err.message || "Falha de rede"));
+        }
+      }
+
+      function renderWorkGuidance(guidance) {
+        const box = $("work-guidance-box");
+        if (!guidance || !guidance.status) {
+          box.hidden = true;
+          box.innerHTML = "";
+          return;
+        }
+        const badge = guidanceLabel(guidance.status);
+        const reason = reasonLabel(guidance.reason);
+        const cls = badge.cls || "info";
+        box.className = "alert-box " + cls;
+        box.hidden = false;
+        box.innerHTML =
+          "<div class=\"flex-row\" style=\"justify-content:space-between\">" +
+          "<div><strong>Orientação:</strong> <span class=\"badge " + badge.cls + "\">" + escHtml(badge.text) + "</span>" +
+          (reason ? (" · <span>Motivo: " + escHtml(reason) + "</span>") : "") + "</div>" +
+          (guidance.lastUpdatedAt ? ("<span class=\"muted\" style=\"font-size:12px\">Último registro: " + escHtml(formatDate(guidance.lastUpdatedAt)) + "</span>") : "") +
+          "</div>" +
+          (guidance.message ? ("<div style=\"margin-top:4px\">" + escHtml(guidance.message) + "</div>") : "");
+      }
+
+      function renderSummaryListHtml(items, emptyText) {
+        const arr = toArray(items);
+        if (!arr.length) return "<p class=\"muted\">" + escHtml(emptyText) + "</p>";
+        return "<ul>" + arr.map((x) => "<li>" + escHtml(x) + "</li>").join("") + "</ul>";
+      }
+
+      function renderWorkSummary(data) {
+        const sum = (data && data.summary) || {};
+        const st = (data && data.state) || {};
+        const hasSummaryState = sum.currentState !== undefined && sum.currentState !== null;
+        const currentState = (hasSummaryState ? String(sum.currentState) : String(st.currentTask ?? "")) || "Nenhum resumo de estado registrado.";
+        const nextSteps = Array.isArray(sum.nextSteps) ? sum.nextSteps : (Array.isArray(st.nextActions) ? st.nextActions : []);
+        const tests = Array.isArray(sum.tests) ? sum.tests : (Array.isArray(st.tests) ? st.tests : []);
+        const revalidate = Array.isArray(sum.revalidate) ? sum.revalidate : (Array.isArray(st.revalidate) ? st.revalidate : []);
+        const unresolved = Array.isArray(sum.unresolved) ? sum.unresolved : (Array.isArray(st.unresolved) ? st.unresolved : []);
+
+        $("work-summary-section").hidden = false;
+        $("work-summary-grid").innerHTML =
+          "<div class=\"summary-box\"><h4>Estado Atual</h4><p>" + escHtml(currentState) + "</p></div>" +
+          "<div class=\"summary-box\"><h4>Próximos Passos</h4>" + renderSummaryListHtml(nextSteps, "Nenhum próximo passo registrado.") + "</div>" +
+          "<div class=\"summary-box\"><h4>Testes / Verificação</h4>" + renderSummaryListHtml(tests, "Nenhum teste registrado.") + "</div>" +
+          "<div class=\"summary-box\"><h4>Revalidar</h4>" + renderSummaryListHtml(revalidate, "Nada marcado para revalidação.") + "</div>" +
+          (toArray(unresolved).length ? ("<div class=\"summary-box\"><h4>Pendências / Não resolvido</h4>" + renderSummaryListHtml(unresolved, "") + "</div>") : "");
+      }
+
+      function renderSelectedWorkDoc() {
+        if (!selectedWorkData) return;
+        const viewer = $("work-doc-viewer");
+        const historyPanel = $("work-history-panel");
+        const ckptPanel = $("work-checkpoints-panel");
+
+        if (selectedWorkDoc === "events") {
+          viewer.hidden = true;
+          ckptPanel.hidden = true;
+          historyPanel.hidden = false;
+          renderWorkHistory();
+          return;
+        }
+        if (selectedWorkDoc === "checkpoints") {
+          viewer.hidden = true;
+          historyPanel.hidden = true;
+          ckptPanel.hidden = false;
+          void refreshCheckpointComparison();
+          return;
+        }
+
+        historyPanel.hidden = true;
+        ckptPanel.hidden = true;
+        viewer.hidden = false;
+        let nextText = "";
+        if (selectedWorkDoc === "context") {
+          nextText = selectedWorkData.context || "Sem context.md registrado.";
+        } else if (selectedWorkDoc === "handoff") {
+          nextText = selectedWorkData.handoff || "Nenhum handoff.md registrado para este trabalho.";
+        } else if (selectedWorkDoc === "compact") {
+          nextText = selectedWorkData.compact || "Nenhuma compactação (compact.md) registrada.";
+        }
+        if (viewer.textContent !== nextText) viewer.textContent = nextText;
+      }
+
+      // Delimited Recent History Search (Improvement 4)
+      function getWorkHistoryFilter(workId) {
+        if (!historyFilterByWork.has(workId)) {
+          historyFilterByWork.set(workId, { query: "", category: "all" });
+        }
+        return historyFilterByWork.get(workId);
+      }
+
+      function normalizeHistoryEntries(history) {
+        const h = history || {};
+        const out = [];
+        const addGroup = (cat, label, arr) => {
+          for (const item of (Array.isArray(arr) ? arr : [])) {
+            const at = item.at || item.timestamp || "";
+            const title = item.tool || item.type || item.file || item.path || item.decision || label;
+            const summary = item.summary || item.command || item.text || item.title || "";
+            const detailObj = item.args || item.result || item.data || item;
+            const detailText = typeof detailObj === "string" ? detailObj : JSON.stringify(detailObj);
+            const haystack = [cat, label, at, title, summary, item.client, item.surface, detailText].join(" ").toLowerCase();
+            out.push({ cat, label, at, title, summary, client: item.client, surface: item.surface, revision: item.revision, detailText, haystack });
+          }
+        };
+        addGroup("events", "Evento", h.events);
+        addGroup("commands", "Comando", h.commands);
+        addGroup("files", "Arquivo", h.files);
+        addGroup("decisions", "Decisão", h.decisions);
+        out.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+        return out;
+      }
+
+      function renderWorkHistory() {
+        if (!selectedWorkData || !selectedWorkId) return;
+        const filter = getWorkHistoryFilter(selectedWorkId);
+        if (document.activeElement !== $("history-search-input") && $("history-search-input").value !== filter.query) {
+          $("history-search-input").value = filter.query;
+        }
+        if ($("history-category-filter").value !== filter.category) {
+          $("history-category-filter").value = filter.category;
+        }
+
+        const all = normalizeHistoryEntries(selectedWorkData.history);
+        const q = filter.query.trim().toLowerCase();
+        const filtered = all.filter((entry) => {
+          if (filter.category !== "all" && entry.cat !== filter.category) return false;
+          if (q && !entry.haystack.includes(q)) return false;
+          return true;
+        });
+
+        const h = selectedWorkData.history || {};
+        const counts = [
+          "eventos: " + ((h.events && h.events.length) || 0),
+          "comandos: " + ((h.commands && h.commands.length) || 0),
+          "arquivos: " + ((h.files && h.files.length) || 0),
+          "decisões: " + ((h.decisions && h.decisions.length) || 0),
+        ].join(" · ");
+        $("history-search-status").textContent = "Exibindo " + filtered.length + " de " + all.length + " registros recentes carregados (" + counts + ").";
+
+        const container = $("history-results-list");
+        if (!filtered.length) {
+          container.innerHTML = "<p class=\"muted\">Nenhum registro recente encontrado para este filtro.</p>";
+          return;
+        }
+        container.innerHTML = filtered.map((e) => {
+          return "<div class=\"history-item\">" +
+            "<div class=\"history-item-head\">" +
+            "<span class=\"badge\">" + escHtml(e.label) + "</span>" +
+            "<strong>" + escHtml(e.title) + "</strong>" +
+            "<span>" + escHtml(formatDate(e.at)) + "</span>" +
+            (e.surface ? ("<span>(" + escHtml(e.surface) + (e.revision ? (" / rev " + escHtml(e.revision)) : "") + ")</span>") : "") +
+            (e.client ? ("<code>" + escHtml(e.client) + "</code>") : "") +
+            "</div>" +
+            (e.summary ? ("<div style=\"margin-bottom:4px\">" + escHtml(e.summary) + "</div>") : "") +
+            "<div class=\"history-item-body muted\">" + escHtml(e.detailText) + "</div>" +
+            "</div>";
+        }).join("");
+      }
+
+      $("history-search-input").addEventListener("input", () => {
+        if (!selectedWorkId) return;
+        const filter = getWorkHistoryFilter(selectedWorkId);
+        filter.query = $("history-search-input").value;
+        renderWorkHistory();
+      });
+
+      $("history-category-filter").addEventListener("change", () => {
+        if (!selectedWorkId) return;
+        const filter = getWorkHistoryFilter(selectedWorkId);
+        filter.category = $("history-category-filter").value;
+        renderWorkHistory();
+      });
+
+      $("history-search-clear").addEventListener("click", () => {
+        if (!selectedWorkId) return;
+        historyFilterByWork.set(selectedWorkId, { query: "", category: "all" });
+        $("history-search-input").value = "";
+        $("history-category-filter").value = "all";
+        renderWorkHistory();
+      });
+
+      // Checkpoint Comparison (Improvement 4)
+      function populateCheckpointSelectors(data) {
+        const list = Array.isArray(data.checkpoints) ? data.checkpoints : [];
+        const leftSel = $("ckpt-left-select");
+        const rightSel = $("ckpt-right-select");
+        if (!list.length) {
+          leftSel.innerHTML = "<option value=\"\">Sem checkpoints</option>";
+          rightSel.innerHTML = "<option value=\"\">Sem checkpoints</option>";
+          $("ckpt-compare-grid").hidden = true;
+          $("ckpt-compare-status").textContent = "Nenhum checkpoint salvo ainda para este trabalho.";
+          return;
+        }
+        const opts = list.map((c) => {
+          const seq = Number(c.sequence);
+          const extra = c.createdAt ? (" · " + formatDate(c.createdAt)) : "";
+          return "<option value=\"" + escHtml(seq) + "\">Checkpoint #" + escHtml(seq) + escHtml(extra) + "</option>";
+        }).join("");
+        const prevPair = checkpointPairByWork.get(data.work.workId);
+        if (leftSel.innerHTML !== opts) leftSel.innerHTML = opts;
+        if (rightSel.innerHTML !== opts) rightSel.innerHTML = opts;
+
+        const validSeqs = new Set(list.map((c) => String(Number(c.sequence))));
+        if (prevPair && validSeqs.has(String(prevPair.left)) && validSeqs.has(String(prevPair.right))) {
+          leftSel.value = String(prevPair.left);
+          rightSel.value = String(prevPair.right);
+        } else {
+          rightSel.value = String(Number(list[0].sequence));
+          leftSel.value = String(Number((list[1] || list[0]).sequence));
+          checkpointPairByWork.set(data.work.workId, { left: Number(leftSel.value), right: Number(rightSel.value) });
+        }
+      }
+
+      async function fetchCheckpointContent(workId, sequence, signal) {
+        const key = workId + ":" + sequence;
+        if (checkpointCache.has(key)) return checkpointCache.get(key);
+        const data = await fetchJson("/api/work/checkpoint?workId=" + encodeURIComponent(workId) + "&sequence=" + encodeURIComponent(sequence), { signal });
+        const content = data.content || "";
+        checkpointCache.set(key, content);
+        return content;
+      }
+
+      function renderCheckpointDiffView(leftText, rightText, highlightDiff) {
+        const leftEl = $("ckpt-left-content");
+        const rightEl = $("ckpt-right-content");
+        if (!highlightDiff) {
+          leftEl.textContent = leftText || "(vazio)";
+          rightEl.textContent = rightText || "(vazio)";
+          return;
+        }
+        const leftLines = String(leftText || "").split(/\r?\n/);
+        const rightLines = String(rightText || "").split(/\r?\n/);
+        const rightSet = new Set(rightLines);
+        const leftSet = new Set(leftLines);
+        leftEl.innerHTML = leftLines.map((line) => {
+          const cls = !rightSet.has(line) ? "diff-line-rem" : "";
+          return cls ? ("<span class=\"" + cls + "\">" + escHtml(line || " ") + "</span>") : escHtml(line);
+        }).join("\n");
+        rightEl.innerHTML = rightLines.map((line) => {
+          const cls = !leftSet.has(line) ? "diff-line-add" : "";
+          return cls ? ("<span class=\"" + cls + "\">" + escHtml(line || " ") + "</span>") : escHtml(line);
+        }).join("\n");
+      }
+
+      async function refreshCheckpointComparison() {
+        if (!selectedWorkId || !selectedWorkData) return;
+        const list = Array.isArray(selectedWorkData.checkpoints) ? selectedWorkData.checkpoints : [];
+        if (!list.length) return;
+
+        const leftSeq = Number($("ckpt-left-select").value);
+        const rightSeq = Number($("ckpt-right-select").value);
+        if (!Number.isFinite(leftSeq) || !Number.isFinite(rightSeq) || leftSeq <= 0 || rightSeq <= 0) return;
+
+        checkpointPairByWork.set(selectedWorkId, { left: leftSeq, right: rightSeq });
+        const seq = ++ckptCompareSeq;
+        if (ckptCompareController) ckptCompareController.abort();
+        ckptCompareController = new AbortController();
+
+        setBoxError("ckpt-compare-error", "");
+        $("ckpt-compare-status").textContent = "Carregando checkpoints #" + leftSeq + " e #" + rightSeq + "…";
+        try {
+          const workId = selectedWorkId;
+          const [leftText, rightText] = await Promise.all([
+            fetchCheckpointContent(workId, leftSeq, ckptCompareController.signal),
+            fetchCheckpointContent(workId, rightSeq, ckptCompareController.signal),
+          ]);
+          if (seq !== ckptCompareSeq || workId !== selectedWorkId) return;
+          $("ckpt-left-title").textContent = "Checkpoint #" + leftSeq;
+          $("ckpt-right-title").textContent = "Checkpoint #" + rightSeq;
+          $("ckpt-compare-grid").hidden = false;
+          renderCheckpointDiffView(leftText, rightText, $("ckpt-diff-only").checked);
+          $("ckpt-compare-status").textContent = leftSeq === rightSeq
+            ? ("Exibindo checkpoint #" + leftSeq + " (selecione sequências distintas para comparar alterações).")
+            : ("Comparando checkpoint #" + leftSeq + " com #" + rightSeq + ".");
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (seq !== ckptCompareSeq) return;
+          setBoxError("ckpt-compare-error", "Erro ao carregar checkpoint: " + (err.message || "Falha"));
+          $("ckpt-compare-status").textContent = "";
+        }
+      }
+
+      $("btn-compare-checkpoints").addEventListener("click", () => void refreshCheckpointComparison());
+      $("ckpt-left-select").addEventListener("change", () => void refreshCheckpointComparison());
+      $("ckpt-right-select").addEventListener("change", () => void refreshCheckpointComparison());
+      $("ckpt-diff-only").addEventListener("change", () => void refreshCheckpointComparison());
+
+      // Work Actions
+      $("btn-copy-resume").addEventListener("click", async () => {
+        if (!selectedWorkId) return;
+        const text = "Retome o trabalho " + selectedWorkId + " usando vcontinuity.work com action=\"resume\" e workId=\"" + selectedWorkId + "\".";
+        try {
+          await navigator.clipboard.writeText(text);
+          showBanner("Comando de retomada copiado para a área de transferência.", "ok");
+        } catch {
+          showBanner(text, "info");
+        }
+      });
+
+      $("btn-activate-agent").addEventListener("click", async () => {
+        if (!selectedWorkId) return;
+        const targetId = selectedWorkId;
+        await withActionLock("activate-agent-" + targetId, $("btn-activate-agent"), async () => {
+          try {
+            await apiAction({ action: "work_activate", surface: "agent", workId: targetId });
+            showBanner("Trabalho \"" + targetId + "\" definido como ativo no Agent.", "ok");
+            await refreshOverview(true);
+          } catch (err) {
+            showBanner("Erro ao ativar no Agent: " + err.message, "error");
+          }
+        });
+      });
+
+      $("btn-activate-web").addEventListener("click", async () => {
+        if (!selectedWorkId) return;
+        const targetId = selectedWorkId;
+        await withActionLock("activate-web-" + targetId, $("btn-activate-web"), async () => {
+          try {
+            await apiAction({ action: "work_activate", surface: "web", workId: targetId });
+            showBanner("Trabalho \"" + targetId + "\" definido como ativo na Web (padrão local).", "ok");
+            await refreshOverview(true);
+          } catch (err) {
+            showBanner("Erro ao ativar na Web: " + err.message, "error");
+          }
+        });
+      });
+
+      $("btn-activate-web-conn").addEventListener("click", async () => {
+        if (!selectedWorkId) return;
+        const connId = $("web-connection-select").value;
+        if (!connId) return;
+        const targetId = selectedWorkId;
+        await withActionLock("activate-web-conn-" + targetId, $("btn-activate-web-conn"), async () => {
+          try {
+            await apiAction({ action: "work_activate", surface: "web", workId: targetId, connectionId: connId });
+            showBanner("Trabalho \"" + targetId + "\" definido como ativo para a conexão OAuth " + connId + ".", "ok");
+            await refreshOverview(true);
+            if (selectedWorkId === targetId) await loadWorkDetail(targetId);
+          } catch (err) {
+            showBanner("Erro ao ativar para conexão OAuth: " + err.message, "error");
+          }
+        });
+      });
+
+      async function executeWorkSave(actionName, workId, successMsg) {
+        if (!workId || formBoundWorkId !== workId) {
+          showBanner("Aguarde o carregamento do projeto selecionado antes de salvar.", "warn");
+          return;
+        }
+        const lockKey = "work-save-" + workId;
+        if (busyLocks.has(lockKey)) return;
+
+        let payload;
+        try {
+          payload = buildWorkActionPayload(actionName, workId);
+        } catch (err) {
+          setBoxError("work-update-error", err.message);
+          return;
+        }
+
+        busyLocks.add(lockKey);
+        setBoxError("work-update-error", "");
+        setWorkFormReady(workId, false);
+        try {
+          await apiAction(payload);
+          workDrafts.delete(workId);
+          persistSessionDrafts();
+          showBanner(successMsg, "ok");
+          await refreshOverview(true);
+          if (selectedWorkId === workId) await loadWorkDetail(workId);
+        } catch (err) {
+          await handleWorkSaveError(err, workId);
+        } finally {
+          busyLocks.delete(lockKey);
+          if (selectedWorkId === workId && formBoundWorkId === workId) {
+            setWorkFormReady(workId, true);
+          }
+        }
+      }
+
+      $("btn-save-checkpoint").addEventListener("click", async () => {
+        if (!selectedWorkId) return;
+        await executeWorkSave("work_checkpoint", selectedWorkId, "Checkpoint registrado com sucesso.");
+      });
+
+      $("btn-save-handoff").addEventListener("click", async () => {
+        if (!selectedWorkId) return;
+        await executeWorkSave("work_handoff", selectedWorkId, "Handoff gerado com sucesso.");
+      });
+
+      $("btn-close-work").addEventListener("click", async () => {
+        if (!selectedWorkId || formBoundWorkId !== selectedWorkId) return;
+        const workId = selectedWorkId;
+        const confirmed = await openConfirmDialog({
+          title: "Encerrar trabalho?",
+          description: "Confirma o encerramento do trabalho \"" + workId + "\"? Ele passará para o status closed.",
+          confirmLabel: "Encerrar trabalho",
+          danger: true,
+        });
+        if (!confirmed) return;
+        if (selectedWorkId !== workId || formBoundWorkId !== workId) return;
+        await executeWorkSave("work_close", workId, "Trabalho \"" + workId + "\" encerrado.");
+      });
+
+      // Jobs rendering and actions (Improvement 5)
+      function jobBadgeClass(status) {
+        if (status === "completed") return "ok";
+        if (status === "running" || status === "queued") return "warn";
+        return "err";
+      }
+
+      function renderJobs(jobsData) {
+        const list = (jobsData && jobsData.jobs) || [];
+        const running = list.filter((j) => j.status === "running" || j.status === "queued").length;
+        $("kpi-jobs").textContent = running + " ativos / " + (jobsData.count || 0) + " total";
+        $("kpi-jobs-sub").textContent = running > 0 ? (running + " processo(s) em execução") : "Todos os processos finalizados";
+
+        if (!list.length) {
+          if (lastJobsSig !== "EMPTY") {
+            lastJobsSig = "EMPTY";
+            $("jobs-list").innerHTML = "<p class=\"muted\">Nenhum job registrado em data/jobs.</p>";
+          }
+          return;
+        }
+        if (!selectedJobId && list[0]) {
+          selectedJobId = list[0].jobId;
+          void loadJobDetail(selectedJobId);
+        }
+
+        const sig = JSON.stringify({
+          selectedJobId,
+          items: list.map((j) => ({
+            jobId: j.jobId,
+            title: j.title,
+            status: j.status,
+            pid: j.pid,
+            exitCode: j.exitCode,
+            createdAt: j.createdAt,
+          })),
+        });
+        if (sig === lastJobsSig) return;
+        lastJobsSig = sig;
+
+        $("jobs-list").innerHTML = list.map((j) => {
+          const isSel = j.jobId === selectedJobId;
+          return "<button type=\"button\" class=\"list-item " + (isSel ? "selected" : "") + "\" data-job-id=\"" + escHtml(j.jobId) + "\">" +
+            "<div class=\"list-item-title\"><span>" + escHtml(j.title || j.jobId) + "</span><span class=\"badge " + jobBadgeClass(j.status) + "\">" + escHtml(j.status) + "</span></div>" +
+            "<div class=\"list-item-meta\"><span><code>" + escHtml(j.jobId) + "</code></span><span>PID: " + escHtml(j.pid ?? "—") + "</span><span>Exit: " + escHtml(j.exitCode ?? "—") + "</span><span>" + escHtml(formatDate(j.createdAt)) + "</span></div>" +
+            "</button>";
+        }).join("");
+      }
+
+      $("jobs-list").addEventListener("click", (e) => {
+        const el = e.target && e.target.closest(".list-item[data-job-id]");
+        if (!el) return;
+        selectedJobId = el.dataset.jobId;
+        setBoxError("job-detail-error", "");
+        renderJobs(state && state.jobs ? state.jobs : { jobs: [] });
+        void loadJobDetail(selectedJobId);
+      });
+
+      async function loadJobDetail(jobId) {
+        if (!jobId) return;
+        const seq = ++jobDetailSeq;
+        if (jobDetailController) jobDetailController.abort();
+        jobDetailController = new AbortController();
+
+        try {
+          const data = await fetchJson("/api/job?jobId=" + encodeURIComponent(jobId), { signal: jobDetailController.signal });
+          if (seq !== jobDetailSeq || jobId !== selectedJobId) return;
+          setBoxError("job-detail-error", "");
+          selectedJobData = data;
+          $("job-detail-title").textContent = (data.title || data.jobId) + " (" + data.jobId + ")";
+          const isActive = data.status === "running" || data.status === "queued";
+          $("btn-cancel-job").hidden = !isActive;
+          $("btn-download-job-logs").hidden = false;
+          $("job-detail-meta").innerHTML =
+            "Status: <span class=\"badge " + jobBadgeClass(data.status) + "\">" + escHtml(data.status) + "</span> · " +
+            "Exit code: <code>" + escHtml(data.exitCode ?? "—") + "</code> · " +
+            "Supervisor PID: <code>" + escHtml(data.supervisorPid ?? "—") + "</code>" +
+            (data.reason ? (" · Motivo: <code>" + escHtml(data.reason) + "</code>") : "");
+          $("job-stdout").textContent = data.stdout || "(vazio)";
+          $("job-stderr").textContent = data.stderr || "(vazio)";
+          $("job-events").textContent = (data.events || []).map((e) => "[" + formatDate(e.at) + "] #" + e.cursor + " " + e.type + ": " + e.text).join("\n") || "(sem eventos)";
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (seq !== jobDetailSeq) return;
+          setBoxError("job-detail-error", "Erro ao carregar job \"" + jobId + "\": " + (err.message || "Falha"));
+        }
+      }
+
+      $("btn-download-job-logs").addEventListener("click", () => {
+        if (!selectedJobData) return;
+        const d = selectedJobData;
+        const eventsText = (d.events || []).map((e) => "[" + formatDate(e.at) + "] #" + e.cursor + " " + e.type + ": " + e.text).join("\n") || "(sem eventos)";
+        const content = [
+          "Job ID: " + d.jobId,
+          "Título: " + (d.title || ""),
+          "Status: " + d.status,
+          "Exit code: " + (d.exitCode ?? "—"),
+          "Motivo: " + (d.reason || "—"),
+          "",
+          "=== STDOUT ===",
+          d.stdout || "(vazio)",
+          "",
+          "=== STDERR ===",
+          d.stderr || "(vazio)",
+          "",
+          "=== EVENTOS ===",
+          eventsText,
+          "",
+        ].join("\n");
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = String(d.jobId || "job") + "-logs.log";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showBanner("Logs de \"" + d.jobId + "\" exportados para arquivo.", "ok");
+      });
+
+      $("btn-cancel-job").addEventListener("click", async () => {
+        if (!selectedJobId) return;
+        const jobId = selectedJobId;
+        const confirmed = await openConfirmDialog({
+          title: "Cancelar job em execução?",
+          description: "Confirma a solicitação de cancelamento do job \"" + jobId + "\"?",
+          confirmLabel: "Cancelar execução",
+          danger: true,
+        });
+        if (!confirmed) return;
+
+        await withActionLock("job-cancel-" + jobId, $("btn-cancel-job"), async () => {
+          try {
+            await apiAction({ action: "job_cancel", jobId });
+            showBanner("Cancelamento solicitado para " + jobId + ".", "warn");
+            await refreshOverview(true);
+            await loadJobDetail(jobId);
+          } catch (err) {
+            setBoxError("job-detail-error", "Erro ao cancelar job: " + err.message);
+            showBanner("Erro ao cancelar job: " + err.message, "error");
+          }
+        });
+      });
+
+      $("btn-prune-jobs").addEventListener("click", async () => {
+        setBoxError("jobs-error-box", "");
+        await withActionLock("job-prune", $("btn-prune-jobs"), async () => {
+          try {
+            const preview = await apiAction({ action: "job_prune", previewOnly: true });
+            const items = preview.items || [];
+            const count = preview.count ?? items.length;
+            if (!count) {
+              showBanner("Nenhum job finalizado elegível para arquivamento.", "info");
+              return;
+            }
+            const confirmed = await openConfirmDialog({
+              title: "Arquivar jobs finalizados (" + count + ")",
+              description: "Os jobs e logs abaixo serão movidos para arquivo morto e removidos da lista ativa:",
+              items,
+              confirmLabel: "Confirmar arquivamento (" + count + ")",
+              danger: true,
+            });
+            if (!confirmed) return;
+
+            const res = await apiAction({ action: "job_prune", previewId: preview.previewId });
+            const archivedCount = res.archived ?? res.removed ?? 0;
+            const failed = Array.isArray(res.failed) ? res.failed : [];
+
+            if (failed.length) {
+              const failMsg = failed.map((f) => (f.jobId || f.label || f.id || "item") + ": " + (f.error || f.reason || "falha")).join(" | ");
+              setBoxError("jobs-error-box", "Falhas ao arquivar " + failed.length + " item(ns): " + failMsg);
+            }
+            if (res.archiveId) {
+              lastJobArchive = res.archiveId;
+              $("job-restore-archive-id").value = res.archiveId;
+              $("jobs-archive-text").textContent = archivedCount + " job(s) arquivado(s) em " + res.archiveId + ".";
+              $("jobs-archive-bar").hidden = false;
+              persistSessionUI();
+            }
+            if (selectedJobId && !failed.some((f) => f.jobId === selectedJobId)) {
+              selectedJobId = null;
+              selectedJobData = null;
+            }
+            showBanner(
+              archivedCount + " job(s) movido(s) para arquivo" + (res.archiveId ? (" (" + res.archiveId + ")") : "") +
+              (failed.length ? ("; " + failed.length + " falha(s) registrada(s).") : "."),
+              failed.length ? "warn" : "ok"
+            );
+            await refreshOverview(true);
+          } catch (err) {
+            setBoxError("jobs-error-box", "Erro na limpeza de jobs: " + err.message);
+            showBanner("Erro na limpeza de jobs: " + err.message, "error");
+          }
+        });
+      });
+
+      async function restoreJobsArchive(rawArchiveId, triggerBtn) {
+        const archiveId = String(rawArchiveId || "").trim();
+        setBoxError("jobs-error-box", "");
+        if (!archiveId) {
+          setBoxError("jobs-error-box", "Informe o archiveId para restaurar.");
+          $("job-restore-archive-id").focus();
+          return;
+        }
+        const confirmed = await openConfirmDialog({
+          title: "Restaurar arquivo de jobs?",
+          description: "Deseja restaurar os jobs do arquivo \"" + archiveId + "\" de volta para data/jobs?",
+          confirmLabel: "Restaurar arquivo",
+          danger: false,
+        });
+        if (!confirmed) return;
+
+        await withActionLock("job-restore-" + archiveId, triggerBtn, async () => {
+          try {
+            const res = await apiAction({ action: "job_restore", archiveId });
+            const failed = Array.isArray(res.failed) ? res.failed : [];
+            if (failed.length) {
+              const failMsg = failed.map((f) => (f.jobId || f.label || "item") + ": " + (f.error || f.reason || "falha")).join(" | ");
+              setBoxError("jobs-error-box", "Falhas na restauração: " + failMsg);
+            } else {
+              $("jobs-archive-bar").hidden = true;
+              if (lastJobArchive === archiveId) lastJobArchive = null;
+              if ($("job-restore-archive-id").value.trim() === archiveId) $("job-restore-archive-id").value = "";
+              persistSessionUI();
+            }
+            const restoredCount = res.restored ?? res.count ?? "";
+            showBanner("Arquivo \"" + archiveId + "\" restaurado" + (restoredCount !== "" ? (" (" + restoredCount + " item(ns))") : "") + ".", failed.length ? "warn" : "ok");
+            await refreshOverview(true);
+          } catch (err) {
+            setBoxError("jobs-error-box", "Erro ao restaurar arquivo \"" + archiveId + "\": " + err.message);
+            showBanner("Erro ao restaurar arquivo: " + err.message, "error");
+          }
+        });
+      }
+
+      $("btn-restore-jobs").addEventListener("click", () => {
+        void restoreJobsArchive(lastJobArchive, $("btn-restore-jobs"));
+      });
+
+      $("btn-restore-by-id").addEventListener("click", () => {
+        void restoreJobsArchive($("job-restore-archive-id").value, $("btn-restore-by-id"));
+      });
+
+      // OAuth Grants and Prune (Improvement 5)
+      function renderOAuth(oauth) {
+        if (!oauth) return;
+        const activeCount = (oauth.activeGrants || []).length;
+        const pendingLen = (oauth.pendingRequests && oauth.pendingRequests.length) || 0;
+        $("kpi-oauth").textContent = activeCount + " ativa(s)";
+        $("kpi-oauth-sub").textContent = (oauth.activeAccessTokens || 0) + " access · " + (oauth.activeRefreshTokens || 0) + " refresh · " + pendingLen + " pendente(s)";
+        $("oauth-stats-badge").textContent = (oauth.totalClients || 0) + " clientes (" + (oauth.cimdClientsCount || 0) + " CIMD · " + (oauth.dcrClientsCount || 0) + " DCR) · " + (oauth.revokedGrantsCount || 0) + " revogados";
+
+        const grants = oauth.activeGrants || [];
+        const grantsSig = JSON.stringify(grants);
+        if (grantsSig !== lastOAuthGrantsSig) {
+          lastOAuthGrantsSig = grantsSig;
+          if (!grants.length) {
+            $("oauth-grants-container").innerHTML = "<p class=\"muted\">Nenhuma concessão OAuth ativa no momento.</p>";
+          } else {
+            const rows = grants.map((g) => {
+              const scopesBadges = (g.scopes || []).map((s) => "<span class=\"badge\">" + escHtml(s) + "</span>").join("");
+              return "<tr>" +
+                "<td><strong>" + escHtml(g.clientName) + "</strong><br><small class=\"muted\"><code>" + escHtml(g.clientId) + "</code></small></td>" +
+                "<td><code>" + escHtml(g.connectionId) + "</code></td>" +
+                "<td><div class=\"flex-row\">" + scopesBadges + "</div></td>" +
+                "<td>" + escHtml(g.activeAccessTokens) + " access / " + escHtml(g.activeRefreshTokens) + " refresh</td>" +
+                "<td>" + escHtml(formatDate(g.createdAt)) + "</td>" +
+                "<td><form method=\"post\" action=\"/decision\" class=\"oauth-revoke-form\" data-client-name=\"" + escHtml(g.clientName || g.connectionId) + "\" data-conn-id=\"" + escHtml(g.connectionId) + "\" style=\"margin:0\">" +
+                "<input type=\"hidden\" name=\"csrf\" value=\"" + escHtml(csrf) + "\">" +
+                "<input type=\"hidden\" name=\"connectionId\" value=\"" + escHtml(g.connectionId) + "\">" +
+                "<button type=\"submit\" name=\"decision\" value=\"revoke\" class=\"danger\">Revogar</button>" +
+                "</form></td></tr>";
+            }).join("");
+            $("oauth-grants-container").innerHTML =
+              "<table><thead><tr><th>Cliente</th><th>Connection ID</th><th>Escopos Concedidos</th><th>Tokens Ativos</th><th>Criado em</th><th>Ação</th></tr></thead><tbody>" + rows + "</tbody></table>";
+          }
+        }
+
+        const descriptions = oauth.scopeDescriptions || {};
+        const scopesSig = JSON.stringify({ scopes: oauth.scopes || [], descriptions });
+        if (scopesSig !== lastOAuthScopesSig) {
+          lastOAuthScopesSig = scopesSig;
+          $("oauth-scopes-catalog").innerHTML = (oauth.scopes || []).map((scope) => {
+            return "<div class=\"scope-item\"><div><code>" + escHtml(scope) + "</code><div class=\"muted\" style=\"margin-top:3px\">" + escHtml(descriptions[scope] || "") + "</div></div></div>";
+          }).join("");
+        }
+      }
+
+      $("oauth-grants-container").addEventListener("submit", async (e) => {
+        const form = e.target;
+        if (!form || !form.classList.contains("oauth-revoke-form")) return;
+        e.preventDefault();
+        if (form.dataset.submitting === "1") return;
+
+        const connId = form.dataset.connId || "";
+        const clientName = form.dataset.clientName || connId;
+        const confirmed = await openConfirmDialog({
+          title: "Revogar conexão OAuth?",
+          description: "Confirma a revogação de \"" + clientName + "\" (" + connId + ")? Todos os tokens ativos dessa conexão serão invalidados.",
+          confirmLabel: "Revogar conexão",
+          danger: true,
+        });
+        if (!confirmed) return;
+
+        setBoxError("oauth-error-box", "");
+        await withActionLock("oauth-revoke-" + connId, form.isConnected ? Array.from(form.querySelectorAll("button[type=\"submit\"]")) : [], async () => {
+          try {
+            await apiAction({ action: "oauth_revoke", connectionId: connId });
+            showBanner("Conexão OAuth \"" + clientName + "\" revogada com sucesso.", "ok");
+            await refreshOverview(true);
+          } catch (err) {
+            if (err && /Unsupported dashboard action/i.test(err.message || "")) {
+              // Fallback via connected /decision form while preserving drafts in sessionStorage
+              persistSessionDrafts();
+              persistSessionUI();
+              const submitForm = document.createElement("form");
+              submitForm.method = "post";
+              submitForm.action = "/decision";
+              submitForm.hidden = true;
+              for (const [k, v] of [["csrf", csrf], ["connectionId", connId], ["decision", "revoke"]]) {
+                const inp = document.createElement("input");
+                inp.type = "hidden";
+                inp.name = k;
+                inp.value = v;
+                submitForm.appendChild(inp);
+              }
+              document.body.appendChild(submitForm);
+              submitForm.submit();
+              return;
+            }
+            setBoxError("oauth-error-box", "Erro ao revogar conexão OAuth: " + err.message);
+            showBanner("Erro ao revogar conexão OAuth: " + err.message, "error");
+          }
+        });
+      });
+
+      $("btn-prune-oauth").addEventListener("click", async () => {
+        setBoxError("oauth-error-box", "");
+        await withActionLock("oauth-prune", $("btn-prune-oauth"), async () => {
+          try {
+            const preview = await apiAction({ action: "oauth_prune", previewOnly: true });
+            const items = preview.items || [];
+            const count = preview.count ?? items.length;
+            if (!count) {
+              showBanner("Nenhum grant revogado ou token inativo para limpar.", "info");
+              return;
+            }
+            const confirmed = await openConfirmDialog({
+              title: "Confirmar limpeza OAuth (" + count + ")",
+              description: "Os grants revogados e tokens inativos abaixo serão removidos. Todos os clientes OAuth registrados serão preservados:",
+              items,
+              confirmLabel: "Confirmar limpeza (" + count + ")",
+              danger: true,
+            });
+            if (!confirmed) return;
+
+            const res = await apiAction({ action: "oauth_prune", previewId: preview.previewId });
+            const failed = Array.isArray(res.failed) ? res.failed : [];
+            if (failed.length) {
+              setBoxError("oauth-error-box", "Falhas parciais na limpeza OAuth: " + JSON.stringify(failed));
+            }
+            showBanner(
+              "Limpeza concluída: " + (res.removedGrants ?? 0) + " grant(s) revogado(s) e " +
+              (res.removedTokens ?? 0) + " token(s) inativo(s) removido(s); clientes preservados.",
+              failed.length ? "warn" : "ok"
+            );
+            await refreshOverview(true);
+          } catch (err) {
+            setBoxError("oauth-error-box", "Erro na limpeza OAuth: " + err.message);
+            showBanner("Erro na limpeza OAuth: " + err.message, "error");
+          }
+        });
+      });
+
+      // Transfers and System
+      function renderTransfers(transfers) {
+        if (!transfers) return;
+        const sig = JSON.stringify(transfers);
+        if (sig === lastTransfersSig) return;
+        lastTransfersSig = sig;
+
+        const badge = $("transfer-tunnel-badge");
+        if (transfers.tunnelActive) {
+          badge.className = "badge ok";
+          badge.textContent = "Túnel ativo: " + transfers.tunnelUrl;
+        } else {
+          badge.className = "badge";
+          badge.textContent = "Túnel sob demanda em repouso";
+        }
+        $("transfer-paths-info").innerHTML =
+          "Raiz de mídia: <code>" + escHtml(transfers.root) + "</code> · " +
+          "Limite de importação: <strong>" + escHtml(formatBytes(transfers.maxInputBytes)) + "</strong> · " +
+          "Downloads em andamento: <strong>" + escHtml(transfers.activeImportsCount) + "</strong> · " +
+          "Links de exportação ativos: <strong>" + escHtml((transfers.activeDeliveries || []).length) + "</strong>";
+
+        const renderFileTable = (items, emptyText) => {
+          if (!items || !items.length) return "<p class=\"muted\">" + escHtml(emptyText) + "</p>";
+          const rows = items.map((f) => {
+            return "<tr><td><strong>" + escHtml(f.name) + "</strong><br><small class=\"muted\"><code>" + escHtml(f.path) + "</code></small></td><td>" + escHtml(formatBytes(f.bytes)) + "</td><td>" + escHtml(formatDate(f.updatedAt)) + "</td></tr>";
+          }).join("");
+          return "<table><thead><tr><th>Arquivo</th><th>Tamanho</th><th>Atualizado</th></tr></thead><tbody>" + rows + "</tbody></table>";
+        };
+
+        $("transfers-imports-list").innerHTML = renderFileTable(transfers.imports, "Nenhum arquivo em imports/.");
+        $("transfers-exports-list").innerHTML = renderFileTable(transfers.exports, "Nenhum arquivo em exports/.");
+      }
+
+      function renderSystem(data) {
+        const sig = JSON.stringify({
+          ports: data.ports,
+          resource: data.oauth && data.oauth.resource,
+          workspaceRoots: data.workspaceRoots,
+          webToolNames: data.webToolNames,
+        });
+        if (sig === lastSystemSig) return;
+        lastSystemSig = sig;
+
+        const p = data.ports || {};
+        $("system-endpoints-table").querySelector("tbody").innerHTML =
+          "<tr><th>MCP Web Local</th><td><code>http://127.0.0.1:" + escHtml(p.mcp) + "/mcp/web</code></td></tr>" +
+          "<tr><th>MCP Agent Local</th><td><code>http://127.0.0.1:" + escHtml(p.mcp) + "/mcp/agent</code></td></tr>" +
+          "<tr><th>Painel Local & Aprovação OAuth</th><td><code>http://127.0.0.1:" + escHtml(p.admin) + "/</code></td></tr>" +
+          "<tr><th>Gateway OAuth Local</th><td><code>http://127.0.0.1:" + escHtml(p.publicGateway) + "</code></td></tr>" +
+          "<tr><th>Resource Público OAuth</th><td><code>" + escHtml((data.oauth && data.oauth.resource) || "—") + "</code></td></tr>" +
+          "<tr><th>Healthcheck Local</th><td><code>http://127.0.0.1:" + escHtml(p.mcp) + "/healthz</code></td></tr>";
+        $("system-roots-list").innerHTML = (data.workspaceRoots || []).map((r) => "<div class=\"list-item\" style=\"cursor:default\"><code>" + escHtml(r) + "</code></div>").join("");
+        $("system-tools-list").innerHTML = (data.webToolNames || []).map((t) => "<div class=\"scope-item\"><code>" + escHtml(t) + "</code></div>").join("");
+      }
+
+      // Overview polling with stale-response prevention
+      async function refreshOverview(force = false) {
+        if (overviewInFlight && !force) return;
+        overviewInFlight = true;
+        const seq = ++overviewSeq;
+        if (force && overviewController) overviewController.abort();
+        overviewController = new AbortController();
+
+        try {
+          const data = await fetchJson("/api/overview", { signal: overviewController.signal });
+          if (seq !== overviewSeq) return;
+
+          state = data;
+          $("health-dot").classList.toggle("offline", !(data.health && data.health.ok));
+          $("version-badge").textContent = "v" + data.version;
+          $("uptime-label").textContent = "Ativo há " + formatUptime(data.uptimeSeconds);
+          $("refresh-status").textContent = "";
+          $("kpi-health").textContent = (data.health && data.health.ok) ? "Saudável (OK)" : "Degradado";
+          $("kpi-ports").textContent = "MCP :" + data.ports.mcp + " · Painel :" + data.ports.admin + " · Gateway :" + data.ports.publicGateway;
+
+          syncProjectRootsUI(data.workspaceRoots);
+          renderPendingOAuth(data.oauth);
+          const hadBoundWork = Boolean(selectedWorkId && formBoundWorkId === selectedWorkId);
+          const hadJob = Boolean(selectedJobId);
+          renderWorks(data.works);
+          renderJobs(data.jobs);
+          renderOAuth(data.oauth);
+          renderTransfers(data.transfers);
+          renderSystem(data);
+
+          if (hadBoundWork && selectedWorkId && $("tab-works").classList.contains("active")) void loadWorkDetail(selectedWorkId);
+          if (hadJob && selectedJobId && $("tab-jobs").classList.contains("active")) void loadJobDetail(selectedJobId);
+        } catch (err) {
+          if (err && err.name === "AbortError") return;
+          if (seq !== overviewSeq) return;
+          $("health-dot").classList.add("offline");
+          $("kpi-health").textContent = "Sem conexão";
+          $("refresh-status").textContent = "Erro de atualização: " + (err.message || "sem conexão");
+        } finally {
+          if (seq === overviewSeq) overviewInFlight = false;
+        }
+      }
+
+      $("refresh-now").addEventListener("click", () => void refreshOverview(true));
+      setInterval(() => {
+        if ($("auto-refresh").checked && !document.hidden) void refreshOverview(false);
+      }, 2000);
+
+      restoreSessionState();
+      if (activeTabName && activeTabName !== "works") activateTab(activeTabName);
+      void refreshOverview(true);
+    })();
+  </script>
+</body>
+</html>

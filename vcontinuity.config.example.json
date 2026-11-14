@@ -1,0 +1,9 @@
+{
+  "workspaceRoots": [
+    "."
+  ],
+  "defaultCwd": ".",
+  "maxOutputChars": 150000,
+  "maxReadChars": 400000,
+  "maxConcurrent": 32
+}

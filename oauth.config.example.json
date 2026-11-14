@@ -1,0 +1,6 @@
+{
+  "publicOrigin": "https://your-public-host.example.com",
+  "resourcePath": "/mcp/web",
+  "publicGatewayPort": 7791,
+  "adminPort": 7783
+}

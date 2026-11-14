@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>vContinuity — Importar arquivos</title>
+<style>
+:root{color-scheme:light dark;font:15px system-ui}body{padding:18px;margin:0}h2{font-size:19px;margin:0 0 10px}p{line-height:1.45;overflow-wrap:anywhere}button{font:inherit;border:1px solid #8886;border-radius:10px;padding:10px 14px;margin:4px 6px 4px 0;cursor:pointer}button:disabled{opacity:.5}small{opacity:.7}
+</style>
+<h2>Importar para o computador</h2>
+<small>vContinuity · transferência nativa</small>
+<p>Selecione arquivos do ChatGPT ou do dispositivo. Os bytes são copiados para o Windows sem recompressão.</p>
+<button id="library" disabled>Selecionar no ChatGPT</button>
+<button id="device" disabled>Escolher do dispositivo</button>
+<input id="files" type="file" multiple hidden>
+<p id="status" role="status" aria-live="polite">Conectando…</p>
+<div id="receipts"></div>
+<button id="continue" hidden>Continuar no chat</button>
+<script>
+(()=>{
+const el=id=>document.getElementById(id),host=()=>window.openai||{};
+let busy=false,bridgeReady=false,receipts=[],phase='idle';
+function show(msg){el('status').textContent=msg;try{host().notifyIntrinsicHeight?.(document.body.scrollHeight)}catch{}}
+function refresh(){
+ const h=host(),ready=bridgeReady&&typeof h.callTool==='function'&&typeof h.getFileDownloadUrl==='function';
+ el('library').disabled=busy||!ready||typeof h.selectFiles!=='function';
+ el('device').disabled=busy||!ready||typeof h.uploadFile!=='function';
+ el('continue').hidden=!receipts.length||busy||typeof h.sendFollowUpMessage!=='function';
+ if(!busy&&phase==='idle')show(ready?'Selecione um ou mais arquivos.':'Conectando ao ChatGPT…');
+}
+function data(result){
+ for(const value of [result?.structuredContent,result?.result?.structuredContent,result]){
+  if(value?.ok===true)return value;
+ }
+ for(const part of result?.content||[]){
+  if(part.type==='text'){try{const value=JSON.parse(part.text);if(value?.ok===true)return value}catch{}}
+ }
+ throw new Error('MCP_TRANSFER_FAILED');
+}
+async function bounded(promise,ms){let t;try{return await Promise.race([promise,new Promise((_,rej)=>t=setTimeout(()=>rej(new Error('TIMEOUT')),ms))])}finally{clearTimeout(t)}}
+async function importFiles(select){
+ if(busy)return;busy=true;phase='selecting';refresh();
+ try{
+  const files=await bounded(select(),120000);
+  if(!files?.length){phase='idle';show('Seleção cancelada.');return}
+  if(files.length>8)throw new Error('TOO_MANY_FILES');
+  for(const selected of files){
+   const fileId=selected.fileId||selected.file_id;
+   const fileName=selected.fileName||selected.file_name||'arquivo';
+   const mime=selected.mimeType||selected.mime_type||'';
+   if(!fileId)throw new Error('NATIVE_FILE_ID_REQUIRED');
+   show('Obtendo acesso a '+fileName+'…');
+   const {downloadUrl}=await bounded(host().getFileDownloadUrl({fileId}),45000);
+   let receipt=data(await host().callTool('vcontinuity.transfer',{action:'import',file:{file_id:fileId,download_url:downloadUrl,file_name:fileName,mime_type:mime}}));
+   while(receipt.state==='queued'||receipt.state==='importing'){
+    show(fileName+': '+receipt.received_bytes+' bytes recebidos…');
+    await new Promise(r=>setTimeout(r,800));
+    receipt=data(await host().callTool('vcontinuity.transfer',{action:'import_status',importId:receipt.import_id}));
+   }
+   if(receipt.state!=='complete')throw new Error(receipt.error?.code||'IMPORT_NOT_COMPLETE');
+   receipts.push({path:receipt.path,filename:receipt.filename,bytes:receipt.bytes,sha256:receipt.sha256,importId:receipt.import_id});
+   const p=document.createElement('p');p.textContent='Recebido: '+receipt.filename+' · '+receipt.bytes+' bytes · SHA-256 '+receipt.sha256;el('receipts').appendChild(p);
+  }
+  phase='complete';show('Arquivos recebidos e verificados no Windows.');
+ }catch(error){phase='failed';show('Falha: '+(error?.message||'TRANSFER_FAILED'))}
+ finally{busy=false;refresh()}
+}
+el('library').addEventListener('click',()=>importFiles(()=>host().selectFiles()));
+el('device').addEventListener('click',()=>el('files').click());
+el('files').addEventListener('change',()=>{
+ const files=Array.from(el('files').files||[]);el('files').value='';
+ if(files.length)importFiles(async()=>{const out=[];for(const file of files)out.push({...await host().uploadFile(file),fileName:file.name,mimeType:file.type});return out});
+});
+el('continue').addEventListener('click',async()=>{
+ try{await host().sendFollowUpMessage({prompt:'Continue usando estes arquivos já importados e verificados pelo vContinuity: '+JSON.stringify(receipts)})}
+ catch{show('Arquivos prontos. Continue no chat usando os recibos acima.')}
+});
+const initId='vcontinuity-files-init',parent=window.parent;
+window.addEventListener('message',event=>{
+ if(event.source!==parent||event.data?.jsonrpc!=='2.0')return;
+ if(event.data.id===initId&&event.data.result?.protocolVersion){
+  bridgeReady=true;parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized'},'*');refresh();
+ }
+});
+window.addEventListener('openai:set_globals',refresh);
+parent.postMessage({jsonrpc:'2.0',id:initId,method:'ui/initialize',params:{appInfo:{name:'vcontinuity-files',version:'0.7.0'},appCapabilities:{},protocolVersion:'2026-01-26'}},'*');
+refresh();
+})();
+</script>
+</html>

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
+      - run: npm run doctor
+      - run: npm run check
+      - run: npm test
+      - run: npm run verify:surface
+      - run: npm run verify:agent
+      - run: npm run verify:parity
+      - run: npm run verify:oauth
+      - run: npm run verify:oauth:security
+      - name: Ensure Playwright browser is available
+        shell: pwsh
+        run: |
+          node --input-type=module -e "import { resolveBrowserLaunchOptions } from './scripts/browser-lib.mjs'; try { await resolveBrowserLaunchOptions(); } catch { const { execSync } = await import('node:child_process'); execSync('npx playwright-core install chromium', { stdio: 'inherit' }); }"
+      - run: npm run test:browser
+      - run: npm run audit:public

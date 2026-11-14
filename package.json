@@ -1,0 +1,41 @@
+{
+  "name": "vcontinuity",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Vendor-agnostic local MCP bridge for authorized Web AI clients and shared project context",
+  "keywords": [
+    "mcp",
+    "local-computer",
+    "oauth",
+    "automation",
+    "ai",
+    "developer-tools"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/vcontinuity/unified-http.mjs",
+    "start:unified": "node src/vcontinuity/unified-http.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "test": "node --test test/vcontinuity.test.mjs test/work-continuity.test.mjs test/cleanup.test.mjs",
+    "test:browser": "node --test test/browser-dashboard.test.mjs",
+    "verify:surface": "node scripts/verify-vcontinuity-surfaces.mjs",
+    "verify:agent": "node scripts/verify-agent-surface.mjs",
+    "verify:parity": "node scripts/verify-v070-unified.mjs",
+    "verify:oauth": "node scripts/verify-v070-oauth.mjs",
+    "verify:oauth:security": "node scripts/verify-v070-oauth-security.mjs",
+    "audit:public": "node scripts/audit-public.mjs",
+    "check": "node --check src/vcontinuity/version.mjs && node --check src/vcontinuity/data-root.mjs && node --check src/vcontinuity/filesystem.mjs && node --check src/vcontinuity/executor.mjs && node --check src/vcontinuity/job-manager.mjs && node --check src/vcontinuity/job-worker.mjs && node --check src/vcontinuity/work-context.mjs && node --check src/vcontinuity/oauth.mjs && node --check src/vcontinuity/file-transfer-service.mjs && node --check src/vcontinuity/transfer.mjs && node --check src/vcontinuity/agent.mjs && node --check src/vcontinuity/web.mjs && node --check src/vcontinuity/dashboard.mjs && node --check src/vcontinuity/unified-http.mjs && node --check scripts/isolated-runtime.mjs && node --check scripts/browser-lib.mjs && node --check scripts/doctor.mjs && node --check scripts/verify-vcontinuity-surfaces.mjs && node --check scripts/verify-agent-surface.mjs && node --check scripts/oauth-v070-lib.mjs && node --check scripts/verify-v070-unified.mjs && node --check scripts/verify-v070-oauth.mjs && node --check scripts/verify-v070-oauth-security.mjs && node --check scripts/audit-public.mjs && node --check test/vcontinuity.test.mjs && node --check test/work-continuity.test.mjs && node --check test/cleanup.test.mjs && node --check test/browser-dashboard.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.65.0"
+  }
+}
