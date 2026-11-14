@@ -30,21 +30,38 @@ npm start
 
 | Endereço padrão | Uso |
 | --- | --- |
-| [127.0.0.1:7783](http://127.0.0.1:7783/) | Painel local, checkpoints, jobs, transferências e aprovações OAuth |
+| [127.0.0.1:7783](http://127.0.0.1:7783/) | Painel local minimalista (Projetos, Jobs, OAuth, Arquivos e Sistema) |
 | `http://127.0.0.1:7781/mcp/agent` | MCP para agentes locais, com uma ferramenta: `vcontinuity.work` |
 | `http://127.0.0.1:7781/mcp/web` | MCP Web local, com 13 ferramentas; `/mcp` é um alias local |
 | `http://127.0.0.1:7791` | Gateway Web com OAuth, destinado a receber o tráfego do proxy HTTPS |
 | [127.0.0.1:7781/healthz](http://127.0.0.1:7781/healthz) | Estado do serviço |
 
+Também há um inicializador portátil para Windows em `bin\vcontinuity-unified.cmd` e um script para inicialização no logon em:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-vcontinuity-on-windows-login.ps1
+```
+
+Variáveis de ambiente opcionais:
+
+- `VCONTINUITY_CONFIG` — caminho para outro arquivo de configuração local
+- `VCONTINUITY_PORT` — porta MCP local (padrão `7781`)
+- `VCONTINUITY_ADMIN_PORT` — porta do painel local e aprovações OAuth (padrão `7783`)
+- `VCONTINUITY_PUBLIC_GATEWAY_PORT` — porta do gateway OAuth/Web (padrão `7791`)
+- `VCONTINUITY_RESOURCE_PATH` — caminho do recurso MCP protegido (padrão `/mcp/web`)
+- `VCONTINUITY_OAUTH_CONFIG` — caminho alternativo para a configuração OAuth
+- `VCONTINUITY_OAUTH_STORAGE_ROOT` — diretório alternativo do estado OAuth
+- `VCONTINUITY_DATA_ROOT` — diretório raiz de estado para Work Context, jobs, arquivos e OAuth padrão (padrão `data/`)
+
 ## Continuidade de um projeto
 
-1. Na aba **Continuidade** do painel, consulte a pasta do projeto. A pasta pode estar acessível sem ter um contexto cadastrado. A consulta não cria um registro.
+1. Na aba **Projetos** do painel local, use a barra no topo para consultar ou cadastrar a pasta do projeto. A pasta pode estar acessível sem ter um contexto cadastrado, e a consulta não cria um registro.
 2. Cadastre o trabalho se ainda não existir ou retome o trabalho existente. Pelo MCP local, use `vcontinuity.work` com `action: "list"` e o caminho da pasta em `root`, seguido de `create` ou `resume`.
 3. Após uma mudança relevante, salve um checkpoint com o estado atual, testes realizados, pendências e próximos passos. Ao gravar pelo MCP, envie o `workId` e a revisão atual em `expectedRevision` para detectar alterações de outro cliente.
 
-O painel recomenda revisar o checkpoint após atividade registrada além do resumo mais recente ou sete dias sem atualização. Ao retomar, o vContinuity escolhe o resumo mais recente e mostra a atividade posterior a ele. O painel preserva rascunhos ao alternar entre trabalhos e permite comparar checkpoints salvos.
+O vContinuity recomenda revisar o checkpoint quando houver alterações locais em arquivos Git após a última referência salva, atividade registrada além do resumo mais recente, ausência/indisponibilidade da referência de arquivos ou sete dias sem atualização. Ao retomar, ele escolhe o resumo mais recente e mostra a atividade posterior a ele. O painel preserva rascunhos ao alternar entre trabalhos, alerta sobre conflitos de revisão, permite comparar checkpoints salvos e mantém os controles manuais de foco (`Ativar no Agent`, `Ativar na Web`, seletor de conexão OAuth) em uma barra secundária discreta.
 
-As duas superfícies MCP orientam o cliente a fazer esse fluxo automaticamente durante trabalhos substanciais: localizar ou criar o registro do projeto, salvar progresso após etapas relevantes e retomar pelo nome quando você pedir “termine o projeto X”. Não é necessário lembrar o agente de cadastrar ou atualizar a cada etapa. Consultas simples continuam sem cadastro, e uma orientação contrária do usuário deve ser respeitada. São instruções para o agente, não um monitor de pastas nem garantia de obediência de qualquer cliente. É necessário manter o computador e o serviço acessíveis, com o MCP conectado e as permissões adequadas. Depois de reiniciar um serviço atualizado, reconecte o cliente para receber as novas instruções.
+Conecte seu agente local em `http://127.0.0.1:7781/mcp/agent` e o cliente Web em `https://seu-host.example.com/mcp/web` (ou `http://127.0.0.1:7781/mcp/web` localmente). As duas superfícies MCP — junto com o [AGENTS.md](AGENTS.md) deste repositório — orientam o cliente a fazer esse fluxo automaticamente durante trabalhos substanciais: localizar ou criar o registro do projeto, salvar progresso após etapas relevantes e retomar pelo nome quando você pedir “termine o projeto X”. Não é necessário lembrar o agente de cadastrar ou atualizar a cada etapa. Consultas simples continuam sem cadastro, e uma orientação contrária do usuário deve ser respeitada. São instruções para o agente, não um monitor de pastas nem garantia de obediência de qualquer cliente. É necessário manter o computador e o serviço acessíveis, com o MCP conectado e as permissões adequadas. Depois de reiniciar um serviço atualizado, reconecte o cliente para receber as novas instruções.
 
 Para trocar de cliente após uma interrupção, retome o mesmo trabalho pela Web. A criação do trabalho e as atualizações semânticas salvam automaticamente uma referência dos arquivos em projetos Git: HEAD, metadados do índice e hashes dos arquivos rastreados e novos não ignorados. A retomada compara essa referência com o disco, inclusive quando um arquivo já estava modificado, e informa os caminhos alterados em `localChanges`. Não é necessário um handoff final para detectar alterações posteriores. Conteúdo de arquivos e diffs não são armazenados.
 
@@ -56,6 +73,16 @@ Cada conexão OAuth tem sua própria seleção de trabalho ativo. Clientes MCP q
 
 O painel também pré-visualiza a limpeza antes de aplicá-la. Jobs finalizados podem ser arquivados com seus logs e restaurados pelo ID do arquivo. A limpeza OAuth remove registros revogados ou expirados que se qualificam, preservando cadastros de clientes e autorizações em andamento.
 
+## Painel local
+
+O painel em [127.0.0.1:7783](http://127.0.0.1:7783/) acompanha automaticamente os temas claro e escuro do sistema e organiza o controle em cinco abas:
+
+- **Projetos** — consultar ou cadastrar pastas autorizadas, alternar entre trabalhos, visualizar estado atual, alterações locais sem checkpoint e testes históricos, comparar checkpoints, filtrar eventos recentes e salvar novos checkpoints ou handoffs.
+- **Jobs** — inspecionar processos em segundo plano, baixar logs (`stdout`, `stderr` e eventos), cancelar execuções e arquivar/restaurar jobs finalizados.
+- **OAuth** — aprovar ou negar solicitações pendentes escolhendo os escopos, revogar conexões ativas e limpar grants e tokens inativos.
+- **Arquivos** — acompanhar o estado do túnel sob demanda e listar arquivos em `imports/` e `exports/`.
+- **Sistema** — consultar endereços e portas locais, `workspaceRoots` configurados e a lista de ferramentas MCP expostas.
+
 ## Acesso por um cliente web remoto (opcional)
 
 1. Configure um proxy reverso ou túnel HTTPS apontando **somente** para `127.0.0.1:7791`. Mantenha as portas `7781` e `7783` locais.
@@ -63,6 +90,22 @@ O painel também pré-visualiza a limpeza antes de aplicá-la. Jobs finalizados 
 3. Reinicie o serviço e configure o cliente MCP para acessar `https://seu-host.example.com/mcp/web`. Abra o painel local, confira o cliente e aprove apenas os escopos necessários. Volte ao cliente para concluir a autorização. Você pode revogar a conexão pelo painel.
 
 O MCP Web oferece consulta de projeto e saúde, operações de arquivo, execução de comandos, jobs, Git, transferências e contexto compartilhado. A [lista completa das ferramentas](README.md#web-mcp-tools) detalha cada uma. O MCP de agente local oferece apenas `vcontinuity.work`.
+
+| Ferramenta Web | Finalidade |
+| --- | --- |
+| `vcontinuity.project` | Pastas autorizadas e instruções do projeto |
+| `vcontinuity.work` | Contexto de trabalho compartilhado e checkpoints |
+| `vcontinuity.fs_list` | Listagem limitada de diretórios |
+| `vcontinuity.fs_read` | Leitura UTF-8 com hash dos arquivos |
+| `vcontinuity.fs_search` | Busca em arquivos com ripgrep |
+| `vcontinuity.fs_patch` | Edição atômica por trecho exato |
+| `vcontinuity.fs_write` | Escrita controlada de arquivos |
+| `vcontinuity.exec` | Execução de comandos em primeiro plano |
+| `vcontinuity.job` | Jobs persistentes em segundo plano |
+| `vcontinuity.git` | Status, diff, log, branches e worktrees |
+| `vcontinuity.transfer` | Importação e exportação de arquivos |
+| `vcontinuity.file_picker` | Seletor nativo de importação |
+| `vcontinuity.health` | Estado do runtime, OAuth e recursos |
 
 | Escopo OAuth | Permissão |
 | --- | --- |

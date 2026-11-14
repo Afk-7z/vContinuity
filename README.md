@@ -143,13 +143,13 @@ The Agent MCP exposes only `vcontinuity.work`; local agents are expected to use 
 
 ## Continue a project
 
-Open the local dashboard and use **Find a project by folder** in the Continuity tab. An authorized folder can be accessed even when it has no Work Context. The dashboard and `vcontinuity.project` report whether to register it, resume it, or review it for a checkpoint. The Agent surface can find the same information with `vcontinuity.work` (`action: "list"`, `root: "<project-directory>"`). A lookup does not register a project.
+Open the [local dashboard](http://127.0.0.1:7783/) and use the folder bar at the top of the **Projetos** tab (labeled in Portuguese) to inspect or register an authorized directory. An authorized folder can be accessed even when it has no Work Context. The dashboard and `vcontinuity.project` report whether to register it, resume it, or review it for a checkpoint. The Agent surface can find the same information with `vcontinuity.work` (`action: "list"`, `root: "<project-directory>"`). A lookup does not register a project.
 
-A checkpoint is recommended after recorded activity beyond the latest summary or after seven days without an update. Review what actually changed, then save a checkpoint with the current state, tests, items to revalidate, and next steps. Resume selects the latest available summary by revision and time and includes recent activity recorded after it. The dashboard keeps an unsaved draft while you switch views, warns about intervening changes, and lets you compare saved checkpoints.
+A checkpoint is recommended when local Git files changed after the saved baseline, when recorded activity occurred beyond the latest summary, when the workspace baseline is missing or unavailable, or after seven days without an update. Review what actually changed, then save a checkpoint with the current state, tests, items to revalidate, and next steps. Resume selects the latest available summary by revision and time and includes recent activity recorded after it. The dashboard preserves unsaved drafts while you switch views, warns about concurrent server updates, lets you compare saved checkpoints, and keeps manual focus controls (`Ativar no Agent`, `Ativar na Web`, OAuth connection selector) tucked in a secondary toolbar.
 
 For MCP clients, the typical sequence is `list` with the project root → `create` if needed or `resume` an existing work → `checkpoint`. Use the current `workId` and `expectedRevision` when saving to detect concurrent edits. The activity log helps locate changes; a checkpoint is where you record what was verified and what still needs doing. Keep credentials and private reasoning out of the record.
 
-Both MCP surfaces instruct clients to perform that sequence automatically during substantive project work: reuse or create the project record, save progress after meaningful milestones, and resume a named project when asked to finish it. Registration and checkpoint updates do not require repeated reminders. Simple lookups remain read-only; user opt-outs and authorization boundaries still apply. These are agent workflow instructions, not a filesystem watcher or a guarantee that every client follows them. The client needs an active MCP connection with the necessary permissions, and the local service/computer must remain reachable. Reconnect clients after restarting an updated service to refresh its instructions.
+Point your local agent to `http://127.0.0.1:7781/mcp/agent` and your remote Web client to `https://your-public-host.example.com/mcp/web` (or `http://127.0.0.1:7781/mcp/web` locally). Both MCP surfaces — along with [AGENTS.md](AGENTS.md) inside this repository — instruct clients to perform that sequence automatically during substantive project work: reuse or create the project record, save progress after meaningful milestones, and resume a named project when asked to finish it. Registration and checkpoint updates do not require repeated reminders. Simple lookups remain read-only; user opt-outs and authorization boundaries still apply. These are agent workflow instructions, not a filesystem watcher or a guarantee that every client follows them. The client needs an active MCP connection with the necessary permissions, and the local service/computer must remain reachable. Reconnect clients after restarting an updated service to refresh its instructions.
 
 To switch clients after an abrupt interruption, resume the same work from the Web client. Work creation and semantic updates automatically save a bounded Git workspace baseline: HEAD, index metadata and content hashes of tracked and non-ignored untracked files. Resume compares current files against that baseline, including files that were already dirty, and returns `localChanges`, affected paths, and checkpoint guidance. File contents and diffs are not stored. No final handoff is required to detect subsequent disk changes.
 
@@ -161,18 +161,27 @@ The active work is separate for each OAuth connection, and for each session when
 
 The dashboard previews cleanup before applying it. Finished jobs and their logs can be archived to `jobs-archive/` under the state root and restored by archive ID. OAuth cleanup removes eligible revoked or expired records and keeps client registrations and authorizations in progress.
 
+## Local dashboard
+
+The local control dashboard at [127.0.0.1:7783](http://127.0.0.1:7783/) adapts automatically to system light and dark themes and organizes operations into five tabs (interface labels are in Portuguese):
+
+- **Projetos** — look up or register authorized folders, switch between works, inspect current state vs. historical verification and uncheckpointed Git changes, view/compare checkpoints and recent events, or save new checkpoints and handoffs.
+- **Jobs** — inspect supervised background processes, download stdout/stderr/event logs, cancel running jobs, and preview/archive/restore finished jobs.
+- **OAuth** — approve or deny pending client authorization requests with per-scope checkboxes, revoke active connections, and prune inactive grants/tokens.
+- **Arquivos** — monitor on-demand transfer tunnel state and inspect `imports/` and `exports/`.
+- **Sistema** — view local endpoints, configured `workspaceRoots`, and the active v0.7.0 MCP tool surface.
+
 ## OAuth scopes
 
 The Web gateway supports:
 
-- `read`
-- `files:read`
-- `files:write`
-- `commands:run`
-- `works:read`
-- `works:write`
-- `git:read`
-- `git:write`
+| Scope | Permission |
+| --- | --- |
+| `read` | Read project context and runtime health |
+| `files:read` / `files:write` | Read or modify authorized files and run corresponding transfers |
+| `commands:run` | Run foreground commands and manage supervised jobs |
+| `works:read` / `works:write` | Read or update shared Work Context |
+| `git:read` / `git:write` | Inspect or modify Git branches and worktrees |
 
 OAuth uses Authorization Code + PKCE S256, refresh-token rotation, dynamic client registration, local approval/revocation, and token hashes at rest.
 
