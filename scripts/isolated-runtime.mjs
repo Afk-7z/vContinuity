@@ -78,7 +78,8 @@ export async function createIsolatedEnv({
   resourcePath = "/mcp/web",
   applyToProcess = false,
 } = {}) {
-  const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+  // Windows runners can expose TEMP through a short (8.3) path.
+  const tmpRoot = await fs.mkdtemp(path.join(await fs.realpath(os.tmpdir()), prefix));
   const dataRoot = path.join(tmpRoot, "data");
   const oauthDir = path.join(dataRoot, "oauth");
   const worksDir = path.join(dataRoot, "works");
