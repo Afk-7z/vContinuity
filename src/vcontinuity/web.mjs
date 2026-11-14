@@ -5,7 +5,7 @@ import { manageJob } from "./job-manager.mjs";
 import { workBinding, workContextService, workContextOp } from "./work-context.mjs";
 import { assertToolScopes } from "./oauth.mjs";
 import { VCONTINUITY_VERSION } from "./version.mjs";
-import { workSchema } from "./agent.mjs";
+import { workSchema, VCONTINUITY_WORKFLOW_INSTRUCTIONS } from "./agent.mjs";
 import {
   transferSchema, handleTransfer, registerTransferResource, pickerResult,
   transferToolMeta, pickerToolMeta,
@@ -35,7 +35,7 @@ export const VCONTINUITY_WEB_INSTRUCTIONS = `vContinuity connects this web clien
 
 Use vcontinuity.project at the start of substantial local-project work to read the authorized roots and project instructions. Use filesystem tools for local files, vcontinuity.exec for bounded foreground commands, vcontinuity.job for long-running processes, vcontinuity.git for Git operations, and vcontinuity.work for cross-client continuity.
 
-Check the continuity field from vcontinuity.project (or call vcontinuity.work with action=list and root). A reachable directory is not a registered work. For an unregistered project, offer to register it when the user only asks for its status; create it when requested or clearly authorized. Resume a matching work before continuing it. When a checkpoint is recommended, verify what changed before updating it. Checkpoint material progress after changes or tests and before stopping or handing off. Include the current state, verification, blockers, and next steps, and use expectedRevision to guard updates. Store no secrets or private reasoning.
+${VCONTINUITY_WORKFLOW_INSTRUCTIONS}
 
 Do not assume access outside configured workspace roots. Do not invent local paths, file receipts, process results, or completed transfers. Verify mutations and tests. Revalidate mutable runtime facts before relying on old Work Context.
 
@@ -131,7 +131,7 @@ export function createVContinuityWebServer({ runtimeStatusProvider = null } = {}
   register(
     "vcontinuity.work",
     "Shared Work Context",
-    "Find shared work with list and a project root, register it with create, resume it, or checkpoint verified progress. Also inspect, compact, hand off, or close work.",
+    "Use automatically for substantive project work: list by root (or find a project by title), create if missing, resume, and checkpoint meaningful progress without waiting for user reminders. Also inspect, compact, hand off, or close work.",
     workSchema,
     async (args, extra) => {
       if (!["list", "status"].includes(args.action) && !args.workId) {

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { createIsolatedEnv } from "../scripts/isolated-runtime.mjs";
 
 const fixture = await createIsolatedEnv({ applyToProcess: true });
@@ -11,6 +13,102 @@ const { WorkContextService } = await import("../src/vcontinuity/work-context.mjs
 function workService(name) {
   return new WorkContextService({ root: path.join(fixture.dataRoot, name) });
 }
+
+async function repository(name) {
+  const root = path.join(fixture.workspaceRoot, name);
+  await fs.mkdir(root, { recursive: true });
+  const git = (...args) => promisify(execFile)("git", ["-C", root, ...args], { windowsHide: true });
+  await git("init");
+  await git("config", "user.email", "fixture@example.test");
+  await git("config", "user.name", "Fixture");
+  await fs.writeFile(path.join(root, "app.txt"), "initial\n");
+  await fs.writeFile(path.join(root, ".gitignore"), "ignored.txt\n");
+  await git("add", ".");
+  await git("-c", "core.hooksPath=", "-c", "commit.gpgSign=false", "commit", "-m", "Initial");
+  return { root, git };
+}
+
+test("abrupt native edits are detected on Web resume without a final agent checkpoint", async () => {
+  const service = workService("native-edits");
+  const { root, git } = await repository("native-edits");
+  await service.create({ workId: "sample", root, goal: "Implement change", activate: false });
+  await fs.writeFile(path.join(root, "app.txt"), "dirty baseline\n");
+  await service.semanticUpdate({ workId: "sample", tests: ["Regression passed"], nextSteps: ["Finish implementation"], activate: false }, { checkpoint: true });
+  assert.equal((await service.inspect("sample")).verification.status, "recorded");
+  await fs.writeFile(path.join(root, "app.txt"), "further edits\n");
+  await fs.writeFile(path.join(root, "new file.txt"), "new content\n");
+  await fs.writeFile(path.join(root, "ignored.txt"), "private content\n");
+  const resumed = await new WorkContextService({ root: service.root }).resume({ workId: "sample", surface: "web", activate: false });
+  assert.equal(resumed.guidance.reason, "uncheckpointed_local_changes");
+  assert.deepEqual(resumed.localChanges.changedFiles, ["app.txt", "new file.txt"]);
+  assert.equal(resumed.verification.status, "revalidation_required");
+  assert.match(resumed.continuationContext, /Uncheckpointed local changes/);
+  assert.match(resumed.continuationContext, /Previous test notes are historical/);
+  assert.doesNotMatch(JSON.stringify(resumed), /private content|further edits/);
+  assert.equal(resumed.state.workspaceSnapshot.files, undefined);
+  assert.deepEqual(resumed.summary.nextSteps, ["Finish implementation"]);
+  await service.compact({ workId: "sample", currentState: "Short summary", activate: false });
+  assert.equal((await service.inspect("sample")).localChanges.status, "changed");
+  await service.semanticUpdate({ workId: "sample", summary: "Edits recorded", activate: false }, { checkpoint: true, handoff: true });
+  const saved = await service.inspect("sample");
+  assert.equal(saved.localChanges.status, "unchanged");
+  assert.equal(saved.verification.status, "revalidation_required");
+  await service.semanticUpdate({ workId: "sample", tests: ["Regression rerun passed"], activate: false }, { checkpoint: true });
+  assert.equal((await service.inspect("sample")).verification.status, "recorded");
+  await fs.writeFile(path.join(root, "new file.txt"), "newer content\n");
+  assert.deepEqual((await service.inspect("sample")).localChanges.changedFiles, ["new file.txt"]);
+  await fs.rename(path.join(root, "new file.txt"), path.join(root, "renamed.txt"));
+  assert.deepEqual((await service.inspect("sample")).localChanges.changedFiles, ["new file.txt", "renamed.txt"]);
+  await git("add", ".");
+  assert.equal((await service.inspect("sample")).localChanges.status, "changed");
+  await service.semanticUpdate({ workId: "sample", activate: false }, { checkpoint: true });
+  await git("-c", "core.hooksPath=", "-c", "commit.gpgSign=false", "commit", "-m", "Native commit");
+  const committed = await service.inspect("sample");
+  assert.equal(committed.localChanges.headChanged, true);
+  assert.equal(committed.guidance.reason, "uncheckpointed_local_changes");
+  await fs.unlink(path.join(root, "app.txt"));
+  assert.ok((await service.inspect("sample")).localChanges.changedFiles.includes("app.txt"));
+});
+
+test("legacy baselines, absent Git and scan limits report unknown verification", async () => {
+  const service = workService("unknown-workspace");
+  const { root } = await repository("unknown-workspace");
+  await service.create({ workId: "sample", root, activate: false });
+  const statePath = path.join(service.workDir("sample"), "state.json");
+  const state = JSON.parse(await fs.readFile(statePath, "utf8"));
+  delete state.workspaceSnapshot;
+  await fs.writeFile(statePath, JSON.stringify(state));
+  const legacy = await service.inspect("sample");
+  assert.equal(legacy.guidance.reason, "workspace_baseline_missing");
+  assert.equal(legacy.verification.status, "unknown");
+  const large = await fs.open(path.join(root, "large.bin"), "w");
+  await large.truncate(65 * 1024 * 1024);
+  await large.close();
+  const limited = await service.inspect("sample");
+  assert.equal(limited.localChanges.status, "unavailable");
+  assert.equal(limited.localChanges.reason, "snapshot_limit");
+  assert.equal(limited.guidance.reason, "workspace_verification_unavailable");
+  assert.match(limited.continuationContext, /freshness is unknown/);
+  await service.create({ workId: "plain", root: fixture.workspaceRoot, activate: false });
+  assert.equal((await service.inspect("plain")).verification.status, "unknown");
+});
+
+test("unborn repositories work and a changed root does not inherit verification", async () => {
+  const service = workService("unborn-workspace");
+  const root = path.join(fixture.workspaceRoot, "unborn");
+  await fs.mkdir(root);
+  await promisify(execFile)("git", ["-C", root, "init"], { windowsHide: true });
+  await service.create({ workId: "sample", root, activate: false });
+  assert.equal((await service.inspect("sample")).localChanges.status, "unchanged");
+  await fs.writeFile(path.join(root, "first.txt"), "first\n");
+  assert.deepEqual((await service.inspect("sample")).localChanges.changedFiles, ["first.txt"]);
+  await service.semanticUpdate({ workId: "sample", tests: ["First file checked"], activate: false }, { checkpoint: true });
+  const other = await repository("other-root");
+  await service.semanticUpdate({ workId: "sample", root: other.root, activate: false }, { checkpoint: true });
+  const moved = await service.inspect("sample");
+  assert.equal(moved.localChanges.status, "unchanged");
+  assert.equal(moved.verification.status, "unknown");
+});
 
 test("a failed checkpoint leaves the previous revision intact and can be retried", async () => {
   const service = workService("checkpoint-rollback");
@@ -85,7 +183,7 @@ test("discovery identifies the repository from a subfolder without registering i
   const first = await service.create({ workId: absent.suggestedWorkId, root: project, activate: false });
   assert.equal(await service.getActive("agent"), null);
   const found = await service.discover(nested);
-  assert.equal(found.status, "ready");
+  assert.equal(found.reason, "workspace_verification_unavailable");
   assert.equal(found.works[0].workId, first.work.workId);
 
   const another = path.join(fixture.workspaceRoot, "Another", "Example Project");
@@ -122,7 +220,7 @@ test("resume favors the newest revision and includes material activity after its
   assert.equal(newest.continuationRevision, 4);
   assert.match(newest.continuationContext, /Checkpoint after handoff/);
   assert.doesNotMatch(newest.continuationContext, /Recent activity after this summary/);
-  assert.equal((await service.guidanceFor(newest.work, newest.state)).status, "ready");
+  assert.equal((await service.guidanceFor(newest.work, newest.state)).reason, "workspace_verification_unavailable");
   assert.deepEqual(newest.summary.tests, ["Verified locally"]);
   assert.deepEqual(newest.summary.nextSteps, ["Review files"]);
   assert.deepEqual(newest.summary.revalidate, ["Check service after restart"]);

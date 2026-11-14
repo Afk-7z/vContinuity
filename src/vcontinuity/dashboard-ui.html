@@ -7,47 +7,51 @@
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #0f141c;
-      --bg-elev: #171f2c;
-      --bg-card: #1c2636;
-      --bg-muted: #131a24;
-      --border: #2b3950;
-      --text: #e7edf6;
-      --text-dim: #a3b5cf;
+      --bg: #0a0b0f;
+      --bg-elev: rgba(13, 15, 20, 0.86);
+      --bg-card: #111319;
+      --bg-muted: #171a22;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.15);
+      --text: #f3f4f6;
+      --text-dim: #8f96a3;
       --accent: #3b82f6;
       --accent-hover: #2563eb;
-      --accent-bg: rgba(59, 130, 246, 0.14);
+      --accent-bg: rgba(59, 130, 246, 0.12);
       --ok: #10b981;
-      --ok-bg: rgba(16, 185, 129, 0.16);
+      --ok-bg: rgba(16, 185, 129, 0.12);
       --warn: #f59e0b;
-      --warn-bg: rgba(245, 158, 11, 0.16);
+      --warn-bg: rgba(245, 158, 11, 0.12);
       --err: #ef4444;
-      --err-bg: rgba(239, 68, 68, 0.16);
-      --chip-bg: #253348;
+      --err-bg: rgba(239, 68, 68, 0.12);
+      --chip-bg: rgba(255, 255, 255, 0.06);
       --focus: #60a5fa;
-      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --mono: ui-monospace, "Cascadia Code", "Fira Code", Consolas, monospace;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+      --font: "Inter", "Segoe UI Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
     }
     @media (prefers-color-scheme: light) {
       :root {
-        --bg: #f4f6fa;
-        --bg-elev: #ffffff;
+        --bg: #f7f8fa;
+        --bg-elev: rgba(255, 255, 255, 0.88);
         --bg-card: #ffffff;
-        --bg-muted: #eef2f7;
-        --border: #cfd8e6;
-        --text: #111827;
-        --text-dim: #4b5563;
+        --bg-muted: #f2f4f8;
+        --border: rgba(15, 23, 42, 0.08);
+        --border-strong: rgba(15, 23, 42, 0.16);
+        --text: #0f172a;
+        --text-dim: #64748b;
         --accent: #2563eb;
         --accent-hover: #1d4ed8;
-        --accent-bg: rgba(37, 99, 235, 0.1);
+        --accent-bg: rgba(37, 99, 235, 0.08);
         --ok: #047857;
-        --ok-bg: rgba(5, 150, 105, 0.12);
+        --ok-bg: rgba(5, 150, 105, 0.1);
         --warn: #b45309;
-        --warn-bg: rgba(217, 119, 6, 0.14);
+        --warn-bg: rgba(217, 119, 6, 0.1);
         --err: #b91c1c;
-        --err-bg: rgba(220, 38, 38, 0.12);
-        --chip-bg: #e5ebf5;
+        --err-bg: rgba(220, 38, 38, 0.1);
+        --chip-bg: rgba(15, 23, 42, 0.05);
         --focus: #1d4ed8;
+        --shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
       }
     }
     * { box-sizing: border-box; }
@@ -57,7 +61,8 @@
       color: var(--text);
       font-family: var(--font);
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
     :focus-visible {
       outline: 2px solid var(--focus);
@@ -76,8 +81,9 @@
     }
     header {
       background: var(--bg-elev);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
+      padding: 10px 24px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -89,32 +95,32 @@
     }
     .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .brand-dot {
-      width: 11px; height: 11px; border-radius: 50%;
+      width: 9px; height: 9px; border-radius: 50%;
       background: var(--ok);
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
       flex-shrink: 0;
     }
     .brand-dot.offline {
       background: var(--err);
-      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
     }
-    .brand h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+    .brand h1 { font-size: 15.5px; margin: 0; font-weight: 600; letter-spacing: -0.02em; }
     .badge {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 12px; font-weight: 600; padding: 2px 9px;
-      border-radius: 999px; background: var(--chip-bg); color: var(--text);
+      font-size: 11.5px; font-weight: 500; padding: 2px 8px;
+      border-radius: 999px; background: var(--chip-bg); color: var(--text-dim);
       max-width: 100%; overflow-wrap: anywhere;
     }
     .badge.ok { background: var(--ok-bg); color: var(--ok); }
     .badge.warn { background: var(--warn-bg); color: var(--warn); }
     .badge.err { background: var(--err-bg); color: var(--err); }
     .badge.accent { background: var(--accent-bg); color: var(--accent); }
-    .header-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--text-dim); }
-    main { max-width: 1400px; margin: 0 auto; padding: 20px 24px 48px; }
+    .header-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12.5px; color: var(--text-dim); }
+    main { max-width: 1260px; margin: 0 auto; padding: 16px 24px 48px; }
     .banner {
       background: var(--accent-bg); border: 1px solid var(--accent);
-      color: var(--text); padding: 10px 14px; border-radius: 10px;
-      margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      color: var(--text); padding: 9px 14px; border-radius: 10px; font-size: 13px;
+      margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
     }
     .banner.ok { background: var(--ok-bg); border-color: var(--ok); }
     .banner.warn { background: var(--warn-bg); border-color: var(--warn); }
@@ -122,52 +128,58 @@
     .banner[hidden] { display: none; }
     .alert-box {
       border-radius: 10px;
-      padding: 12px 14px;
+      padding: 10px 14px;
       margin-bottom: 12px;
       border: 1px solid var(--border);
       background: var(--bg-muted);
+      font-size: 13px;
     }
     .alert-box[hidden] { display: none; }
-    .alert-box.err { border-color: var(--err); background: var(--err-bg); }
-    .alert-box.warn { border-color: var(--warn); background: var(--warn-bg); }
-    .alert-box.ok { border-color: var(--ok); background: var(--ok-bg); }
-    .alert-box.info { border-color: var(--accent); background: var(--accent-bg); }
+    .alert-box.err { border-color: rgba(239, 68, 68, 0.32); background: var(--err-bg); }
+    .alert-box.warn { border-color: rgba(245, 158, 11, 0.32); background: var(--warn-bg); }
+    .alert-box.ok { border-color: rgba(16, 185, 129, 0.32); background: var(--ok-bg); }
+    .alert-box.info { border-color: rgba(59, 130, 246, 0.28); background: var(--accent-bg); }
     .pending-alert {
-      background: var(--warn-bg); border: 2px solid var(--warn);
-      border-radius: 12px; padding: 16px; margin-bottom: 20px;
+      background: var(--warn-bg); border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
     }
     .pending-alert[hidden] { display: none; }
-    .pending-alert h2 { margin: 0 0 10px; font-size: 16px; color: var(--warn); }
+    .pending-alert h2 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--warn); }
     .kpi-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px; margin-bottom: 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 14px; overflow: hidden; box-shadow: var(--shadow);
     }
-    .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-    .kpi-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-    .kpi-value { font-size: 20px; font-weight: 700; margin-bottom: 4px; overflow-wrap: anywhere; }
-    .kpi-sub { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }
+    .kpi-card { padding: 9px 14px; border-right: 1px solid var(--border); min-width: 0; }
+    .kpi-card:last-child { border-right: 0; }
+    .kpi-label { font-size: 11px; color: var(--text-dim); font-weight: 500; margin-bottom: 1px; }
+    .kpi-value { font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+    .kpi-sub { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .tabs {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 18px;
+      display: flex; flex-wrap: wrap; gap: 4px;
+      border-bottom: 1px solid var(--border); margin-bottom: 16px;
     }
     .tab-btn {
-      background: transparent; color: var(--text-dim); border: 1px solid transparent;
-      padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600;
+      background: transparent; color: var(--text-dim); border: 0; border-bottom: 2px solid transparent;
+      padding: 8px 12px 10px; border-radius: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500;
+      transition: color 0.12s, border-color 0.12s;
     }
-    .tab-btn:hover { background: var(--bg-muted); color: var(--text); }
-    .tab-btn.active { background: var(--accent); color: #fff; }
+    .tab-btn:hover { background: transparent; color: var(--text); border-color: transparent; }
+    .tab-btn.active { background: transparent; color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
     .panel { display: none; }
     .panel.active { display: block; }
-    .split-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 12px 0; }
+    .split-grid { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+    .summary-box:first-child { grid-column: 1 / -1; }
     .summary-box {
       background: var(--bg-muted); border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+      font-size: 13px;
     }
     .summary-box h4 {
-      margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim);
+      margin: 0 0 5px; font-size: 11.5px; font-weight: 600; color: var(--text-dim);
     }
-    .summary-box ul { margin: 0; padding-left: 18px; }
+    .summary-box ul { margin: 0; padding-left: 16px; }
     .summary-box li { margin-bottom: 3px; overflow-wrap: anywhere; }
     .summary-box p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
     .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
@@ -177,51 +189,74 @@
     .compare-pane h4 { margin: 0 0 6px; font-size: 13px; }
     .compare-pane pre { max-height: 460px; margin-top: 6px; }
     @media (max-width: 960px) {
-      .split-grid, .two-col, .compare-grid { grid-template-columns: 1fr; }
+      .split-grid, .two-col, .compare-grid, .summary-grid { grid-template-columns: 1fr; }
+      .kpi-card { border-right: 0; border-bottom: 1px solid var(--border); }
+      .kpi-card:last-child { border-bottom: 0; }
     }
     @media (max-width: 640px) {
-      header { padding: 12px 14px; }
+      header { padding: 10px 14px; }
       main { padding: 14px 14px 36px; }
     }
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .card-header h3 { margin: 0; font-size: 15px; font-weight: 650; }
-    .item-list { display: flex; flex-direction: column; gap: 8px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+    .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .card-header h3 { margin: 0; font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+    .item-list { display: flex; flex-direction: column; gap: 4px; }
     .list-item {
-      border: 1px solid var(--border); background: var(--bg-muted);
-      border-radius: 10px; padding: 11px 13px; cursor: pointer; transition: border-color 0.15s;
+      border: 1px solid transparent; background: transparent;
+      border-radius: 8px; padding: 9px 11px; cursor: pointer; transition: background 0.12s, border-color 0.12s;
       text-align: left; width: 100%; color: inherit;
     }
-    .list-item:hover { border-color: var(--accent); }
-    .list-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-    .list-item-title { font-weight: 650; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .list-item-meta { font-size: 12px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 8px; }
+    .list-item:hover { background: var(--bg-muted); border-color: var(--border); }
+    .list-item.selected { background: var(--bg-muted); border-color: var(--border-strong); box-shadow: inset 2px 0 0 var(--accent); }
+    .list-item-title { font-weight: 600; font-size: 13.5px; display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 3px; }
+    .list-item-title > span:last-child { flex-shrink: 0; white-space: nowrap; }
+    .list-item-meta { font-size: 11.5px; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 8px; }
     button, .btn {
-      font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px;
+      font: inherit; font-size: 12.5px; font-weight: 500; padding: 6px 11px;
       border-radius: 8px; border: 1px solid var(--border); background: var(--bg-muted); color: var(--text); cursor: pointer;
+      transition: border-color 0.12s, background 0.12s;
     }
-    button:hover:not(:disabled) { border-color: var(--accent); }
-    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    button.primary:hover:not(:disabled) { background: var(--accent-hover); }
-    button.danger { background: var(--err-bg); border-color: var(--err); color: var(--err); }
+    button:hover:not(:disabled) { border-color: var(--border-strong); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+    button.danger { background: transparent; border-color: rgba(239, 68, 68, 0.35); color: var(--err); }
+    button.danger:hover:not(:disabled) { background: var(--err-bg); border-color: var(--err); }
     button.small { font-size: 12px; padding: 4px 9px; }
+    button.ghost { background: transparent; border-color: var(--border); color: var(--text-dim); font-size: 12px; padding: 4px 9px; }
+    button.ghost:hover:not(:disabled) { color: var(--text); background: var(--bg-muted); }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    code, pre { font-family: var(--mono); font-size: 12.5px; }
-    code { background: var(--bg-muted); padding: 2px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+    .utility-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      padding: 6px 10px; margin-bottom: 12px; border-radius: 8px;
+      background: var(--bg-muted); border: 1px solid var(--border);
+    }
+    .utility-bar[hidden] { display: none; }
+    .utility-label { font-size: 11.5px; color: var(--text-dim); margin-right: 4px; }
+    .utility-bar select { width: auto; min-width: 170px; max-width: 260px; padding: 4px 8px; font-size: 12px; }
+    code, pre { font-family: var(--mono); font-size: 12px; }
+    code { background: var(--chip-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
     pre {
       background: var(--bg-muted); border: 1px solid var(--border); border-radius: 9px;
-      padding: 12px; overflow-x: auto; max-height: 420px; white-space: pre-wrap; word-break: break-word; margin: 8px 0 0;
+      padding: 12px 14px; overflow-x: auto; max-height: 360px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin: 8px 0 0;
     }
-    .subtabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-    .subtab-btn { font-size: 12px; padding: 5px 10px; border-radius: 6px; }
-    .subtab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .field-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-    .field-row label { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+    .subtabs {
+      display: inline-flex; flex-wrap: wrap; gap: 2px; margin: 8px 0 6px;
+      background: var(--bg-muted); border: 1px solid var(--border); border-radius: 8px; padding: 3px;
+    }
+    .subtabs[hidden] { display: none; }
+    .subtab-btn { font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 0; background: transparent; color: var(--text-dim); }
+    .subtab-btn:hover { color: var(--text); }
+    .subtab-btn.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow); font-weight: 600; }
+    .field-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .field-row label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
     input[type="text"], input[type="search"], textarea, select {
       width: 100%; background: var(--bg-muted); border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 8px 10px; font: inherit;
+      color: var(--text); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px;
     }
-    textarea { min-height: 70px; resize: vertical; }
+    input[type="text"]:focus, input[type="search"]:focus, textarea:focus, select:focus {
+      border-color: var(--accent); outline: none;
+    }
+    textarea { min-height: 62px; resize: vertical; }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -245,12 +280,12 @@
     details.log-section { margin-top: 10px; }
     details.log-section summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 0; }
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.62);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.56); backdrop-filter: blur(4px);
       display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100;
     }
     .modal-backdrop[hidden] { display: none; }
     .modal-dialog {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+      background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: 14px;
       max-width: 560px; width: 100%; padding: 18px 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
       max-height: 90vh; overflow-y: auto;
     }
@@ -277,9 +312,9 @@
       <span id="uptime-label">Iniciando…</span>
       <span id="refresh-status" class="muted" aria-live="polite"></span>
       <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer">
-        <input type="checkbox" id="auto-refresh" checked> Atualização automática (2s)
+        <input type="checkbox" id="auto-refresh" checked> Ao vivo
       </label>
-      <button id="refresh-now" type="button">Atualizar agora</button>
+      <button id="refresh-now" type="button" class="ghost">Atualizar</button>
     </div>
   </header>
 
@@ -318,26 +353,22 @@
     </section>
 
     <nav class="tabs" role="tablist" aria-label="Seções do painel">
-      <button id="tab-btn-works" class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="tab-works" data-tab="works">Continuidade (Work Context)</button>
-      <button id="tab-btn-jobs" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-jobs" data-tab="jobs">Processos e Jobs</button>
-      <button id="tab-btn-oauth" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-oauth" data-tab="oauth">Segurança e OAuth</button>
-      <button id="tab-btn-transfers" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-transfers" data-tab="transfers">Transferência de Arquivos</button>
-      <button id="tab-btn-system" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-system" data-tab="system">Superfícies e Configuração</button>
+      <button id="tab-btn-works" class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="tab-works" data-tab="works">Projetos</button>
+      <button id="tab-btn-jobs" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-jobs" data-tab="jobs">Jobs</button>
+      <button id="tab-btn-oauth" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-oauth" data-tab="oauth">OAuth</button>
+      <button id="tab-btn-transfers" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-transfers" data-tab="transfers">Arquivos</button>
+      <button id="tab-btn-system" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="tab-system" data-tab="system">Sistema</button>
     </nav>
 
     <section id="tab-works" class="panel active" role="tabpanel" aria-labelledby="tab-btn-works">
-      <div class="card" id="project-discovery-card">
-        <div class="card-header">
-          <h3>Descobrir ou Registrar Projeto por Pasta</h3>
-          <span class="muted" style="font-size:12px">Verifica se uma pasta autorizada já possui trabalho de continuidade</span>
-        </div>
+      <div class="card" id="project-discovery-card" style="padding:12px 14px">
         <div class="flex-row" style="align-items:flex-end">
           <div class="field-row" style="flex:1 1 340px;margin-bottom:0">
-            <label for="project-cwd-input">Pasta do projeto</label>
-            <input type="text" id="project-cwd-input" list="workspace-roots-datalist" placeholder="Informe ou escolha uma pasta autorizada">
+            <label for="project-cwd-input" class="sr-only">Pasta do projeto</label>
+            <input type="text" id="project-cwd-input" list="workspace-roots-datalist" placeholder="Verificar ou registrar pasta do projeto…">
             <datalist id="workspace-roots-datalist"></datalist>
           </div>
-          <button id="btn-discover-project" type="button" class="primary">Verificar pasta</button>
+          <button id="btn-discover-project" type="button">Verificar pasta</button>
         </div>
         <div id="project-quick-roots" class="flex-row" style="margin-top:8px"></div>
         <div id="project-discovery-result" style="margin-top:12px" hidden></div>
@@ -346,7 +377,7 @@
       <div class="split-grid">
         <div class="card">
           <div class="card-header">
-            <h3>Projetos em Continuidade</h3>
+            <h3>Projetos</h3>
             <span id="works-count-badge" class="badge">0</span>
           </div>
           <div id="works-error-box" class="alert-box err" role="alert" hidden></div>
@@ -359,19 +390,20 @@
           <div class="card" id="work-detail-card">
             <div class="card-header">
               <h3 id="work-detail-title">Selecione um projeto</h3>
-              <div class="flex-row" id="work-detail-actions" hidden>
-                <button id="btn-activate-agent" type="button" title="Definir como trabalho ativo para o Agente local">Ativar no Agent</button>
-                <button id="btn-activate-web" type="button" title="Definir como trabalho ativo padrão local para a superfície Web">Ativar na Web (padrão local)</button>
-                <div id="web-oauth-activate-group" class="inline-group" hidden>
-                  <label for="web-connection-select" class="sr-only">Cliente OAuth para ativação na Web</label>
-                  <select id="web-connection-select" aria-label="Cliente OAuth para ativação na Web"></select>
-                  <button id="btn-activate-web-conn" type="button">Ativar na conexão OAuth</button>
-                </div>
-                <button id="btn-copy-resume" type="button" class="primary">Copiar comando de retomada</button>
-              </div>
             </div>
             <div id="work-detail-error" class="alert-box err" role="alert" hidden></div>
             <div id="work-detail-meta" class="muted" style="margin-bottom:10px"></div>
+            <div class="utility-bar" id="work-detail-actions" hidden>
+              <span class="utility-label">Foco manual:</span>
+              <button id="btn-activate-agent" type="button" class="ghost" title="Definir como trabalho ativo para o Agente local">Ativar no Agent</button>
+              <button id="btn-activate-web" type="button" class="ghost" title="Definir como trabalho ativo padrão local para a superfície Web">Ativar na Web</button>
+              <div id="web-oauth-activate-group" class="inline-group" hidden>
+                <label for="web-connection-select" class="sr-only">Cliente OAuth para ativação na Web</label>
+                <select id="web-connection-select" aria-label="Cliente OAuth para ativação na Web"></select>
+                <button id="btn-activate-web-conn" type="button" class="ghost">Ativar OAuth</button>
+              </div>
+              <button id="btn-copy-resume" type="button" class="ghost" style="margin-left:auto">Copiar retomada</button>
+            </div>
             <div id="work-guidance-box" class="alert-box info" hidden></div>
 
             <div id="work-summary-section" hidden>
@@ -379,19 +411,17 @@
             </div>
 
             <div class="subtabs" id="work-doc-tabs" role="tablist" aria-label="Visualizações do trabalho" hidden>
-              <button class="subtab-btn active" type="button" role="tab" aria-selected="true" data-doc="context">Contexto (context.md)</button>
-              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="handoff">Handoff (handoff.md)</button>
-              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="compact">Compactado (compact.md)</button>
-              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="events">Histórico recente (até 200)</button>
-              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="checkpoints">Comparar Checkpoints</button>
+              <button class="subtab-btn active" type="button" role="tab" aria-selected="true" data-doc="context">Contexto</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="handoff">Handoff</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="compact">Compactado</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="events">Histórico</button>
+              <button class="subtab-btn" type="button" role="tab" aria-selected="false" data-doc="checkpoints">Comparar</button>
             </div>
 
             <pre id="work-doc-viewer">Selecione um projeto à esquerda para inspecionar o contexto, handoff e histórico de eventos.</pre>
 
             <div id="work-history-panel" hidden>
-              <div class="alert-box info" style="margin-top:8px">
-                <strong>Escopo da busca:</strong> pesquisa somente nos registros recentes carregados para este trabalho (até <strong>200 itens</strong> por categoria: eventos, comandos, arquivos e decisões). Não consulta trabalhos antigos nem todo o disco.
-              </div>
+              <p class="muted" style="font-size:12px;margin:6px 0 8px">Filtra os últimos 200 registros carregados por categoria.</p>
               <div class="flex-row" style="margin-bottom:8px">
                 <div class="field-row" style="flex:1 1 240px;margin-bottom:0">
                   <label for="history-search-input">Filtrar histórico recente</label>
@@ -447,7 +477,7 @@
 
           <div class="card" id="work-update-card" hidden>
             <div class="card-header">
-              <h3>Registrar Checkpoint ou Passagem de Bastão (Handoff)</h3>
+              <h3>Novo Checkpoint</h3>
               <div class="flex-row">
                 <span id="work-draft-badge" class="badge">Base rev —</span>
                 <button id="btn-discard-draft" type="button" class="small" hidden>Descartar rascunho</button>
@@ -488,8 +518,8 @@
             </div>
             <div class="flex-row">
               <button id="btn-save-checkpoint" type="button" class="primary">Salvar Checkpoint</button>
-              <button id="btn-save-handoff" type="button">Criar Handoff para Codex</button>
-              <button id="btn-close-work" type="button" class="danger">Encerrar Trabalho</button>
+              <button id="btn-save-handoff" type="button">Gerar Handoff</button>
+              <button id="btn-close-work" type="button" class="danger" style="margin-left:auto">Encerrar</button>
             </div>
           </div>
         </div>
@@ -1081,6 +1111,9 @@
       }
 
       function reasonLabel(reason) {
+        if (reason === "uncheckpointed_local_changes") return "alterações locais posteriores ao checkpoint";
+        if (reason === "workspace_baseline_missing") return "sem referência dos arquivos para comparação";
+        if (reason === "workspace_verification_unavailable") return "não foi possível verificar os arquivos locais";
         if (reason === "recent_activity") return "atividade recente sem checkpoint correspondente";
         if (reason === "review_age") return "tempo decorrido desde a última atualização";
         if (reason === "no_matching_work") return "nenhum trabalho registrado para esta pasta";
@@ -1127,8 +1160,8 @@
         if (!list.length) {
           quickBox.innerHTML = "";
         } else {
-          quickBox.innerHTML = "<span class=\"muted\" style=\"font-size:12px\">Pastas autorizadas:</span> " +
-            list.map((r) => "<button type=\"button\" class=\"small quick-root-btn\" data-root=\"" + escHtml(r) + "\">" + escHtml(r) + "</button>").join("");
+          quickBox.innerHTML = "<span class=\"muted\" style=\"font-size:11.5px\">Atalhos:</span> " +
+            list.map((r) => "<button type=\"button\" class=\"ghost quick-root-btn\" data-root=\"" + escHtml(r) + "\">" + escHtml(r) + "</button>").join("");
         }
         if (!$("project-cwd-input").value.trim() && list[0]) {
           $("project-cwd-input").value = list[0];
@@ -1352,26 +1385,25 @@
         $("works-list").innerHTML = items.map((w) => {
           const isSel = w.workId === selectedWorkId;
           const badges = [];
-          if (w.workId === activeWebId) badges.push("<span class=\"badge ok\">Web ativo</span>");
-          if (w.workId === activeAgentId) badges.push("<span class=\"badge ok\">Agent ativo</span>");
+          if (w.workId === activeWebId) badges.push("<span class=\"badge ok\">Web</span>");
+          if (w.workId === activeAgentId) badges.push("<span class=\"badge ok\">Agent</span>");
           for (const c of conns) {
             const cActive = connectionActiveWorkId(c, activeWebId);
             if (cActive === w.workId) {
-              badges.push("<span class=\"badge accent\">OAuth: " + escHtml(c.clientName || c.connectionId) + "</span>");
+              badges.push("<span class=\"badge accent\">" + escHtml(c.clientName || c.connectionId) + "</span>");
             }
           }
           if (w.guidance && w.guidance.status && w.guidance.status !== "ready") {
             const gb = guidanceLabel(w.guidance.status);
-            badges.push("<span class=\"badge " + gb.cls + "\">" + escHtml(gb.text) + "</span>");
+            const shortLabel = w.guidance.status === "checkpoint_recommended" ? "Revisar" : gb.text;
+            badges.push("<span class=\"badge " + gb.cls + "\">" + escHtml(shortLabel) + "</span>");
           }
           if (workDrafts.get(w.workId)?.dirty) {
             badges.push("<span class=\"badge warn\">Rascunho</span>");
           }
-          badges.push("<span class=\"badge\">rev " + escHtml(w.revision) + "</span>");
-          const phase = (w.state && w.state.phase) || w.status;
           return "<button type=\"button\" class=\"list-item " + (isSel ? "selected" : "") + "\" data-work-id=\"" + escHtml(w.workId) + "\">" +
-            "<div class=\"list-item-title\"><span>" + escHtml(w.title || w.workId) + "</span><div class=\"flex-row\">" + badges.join("") + "</div></div>" +
-            "<div class=\"list-item-meta\"><span>ID: <code>" + escHtml(w.workId) + "</code></span><span>Fase: " + escHtml(phase) + "</span><span>Último: " + escHtml(w.lastClient || "—") + "</span></div>" +
+            "<div class=\"list-item-title\"><span>" + escHtml(w.title || w.workId) + "</span><span class=\"muted\" style=\"font-size:11.5px;font-weight:500\">rev " + escHtml(w.revision) + "</span></div>" +
+            "<div class=\"list-item-meta\"><span>" + escHtml(w.workId) + " · " + escHtml(w.lastClient || "—") + "</span>" + (badges.length ? ("<span class=\"flex-row\" style=\"gap:4px\">" + badges.join("") + "</span>") : "") + "</div>" +
             "</button>";
         }).join("");
       }
@@ -1761,13 +1793,15 @@
             .map((c) => c.clientName || c.connectionId);
 
           $("work-detail-meta").innerHTML =
-            "Revisão <strong>" + escHtml(data.work.revision) + "</strong> · " +
-            "Status: <strong>" + escHtml(data.work.status) + "</strong> · " +
-            "Fase: <code>" + escHtml((data.state && data.state.phase) || "active") + "</code> · " +
-            "Raiz: <code>" + escHtml(data.work.root || "—") + "</code> · " +
-            "Origem: <span class=\"badge accent\">" + escHtml(continuationSourceLabel(data.continuationSource)) + "</span> · " +
-            "Atualizado em " + escHtml(formatDate(data.work.updatedAt)) + " por <code>" + escHtml(data.work.lastClient || "—") + "</code>" +
-            (activeConns.length ? (" · Ativo em OAuth: <strong>" + escHtml(activeConns.join(", ")) + "</strong>") : "");
+            "<div class=\"flex-row\" style=\"gap:6px;font-size:12.5px\">" +
+            "<span>rev <strong>" + escHtml(data.work.revision) + "</strong></span><span>·</span>" +
+            "<span>" + escHtml(data.work.status) + "</span><span>·</span>" +
+            "<span>" + escHtml((data.state && data.state.phase) || "active") + "</span><span>·</span>" +
+            "<span>" + escHtml(continuationSourceLabel(data.continuationSource)) + "</span><span>·</span>" +
+            "<span>" + escHtml(formatDate(data.work.updatedAt)) + " (" + escHtml(data.work.lastClient || "—") + ")</span>" +
+            (activeConns.length ? ("<span>·</span><span class=\"badge accent\">OAuth: " + escHtml(activeConns.join(", ")) + "</span>") : "") +
+            "</div>" +
+            "<div style=\"font-size:12px;margin-top:4px\"><code>" + escHtml(data.work.root || "—") + "</code></div>";
 
           renderWorkGuidance(data.guidance);
           renderWorkSummary(data);
@@ -1884,7 +1918,10 @@
         $("work-summary-grid").innerHTML =
           "<div class=\"summary-box\"><h4>Estado Atual</h4><p>" + escHtml(currentState) + "</p></div>" +
           "<div class=\"summary-box\"><h4>Próximos Passos</h4>" + renderSummaryListHtml(nextSteps, "Nenhum próximo passo registrado.") + "</div>" +
-          "<div class=\"summary-box\"><h4>Testes / Verificação</h4>" + renderSummaryListHtml(tests, "Nenhum teste registrado.") + "</div>" +
+          "<div class=\"summary-box\"><h4>Testes / Verificação</h4>" +
+          (data.verification?.status !== "recorded" ? "<p>Registros históricos: o estado atual precisa de verificação.</p>" : "<p>Verificação informada pelo agente para estes arquivos.</p>") +
+          renderSummaryListHtml(tests, "Nenhum teste registrado.") + "</div>" +
+          (data.localChanges?.status === "changed" ? "<div class=\"summary-box\"><h4>Alterações locais sem checkpoint</h4>" + renderSummaryListHtml(data.localChanges.changedFiles, "A referência Git mudou.") + "</div>" : "") +
           "<div class=\"summary-box\"><h4>Revalidar</h4>" + renderSummaryListHtml(revalidate, "Nada marcado para revalidação.") + "</div>" +
           (toArray(unresolved).length ? ("<div class=\"summary-box\"><h4>Pendências / Não resolvido</h4>" + renderSummaryListHtml(unresolved, "") + "</div>") : "");
       }

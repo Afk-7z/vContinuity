@@ -3,6 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { dataRoot } from "./data-root.mjs";
 import { safePath } from "./filesystem.mjs";
+import { captureWorkSnapshot, compareWorkSnapshot } from "./work-snapshot.mjs";
 
 const DEFAULT_ROOT = path.join(dataRoot, "works");
 const WORK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -61,6 +62,16 @@ async function atomicWrite(file, data) {
   }
 }
 function jsonDocument(value) { return JSON.stringify(value, null, 2) + "\n"; }
+function publicState(state) {
+  const result = { ...state };
+  for (const key of ["workspaceSnapshot", "verificationSnapshot"]) {
+    if (result[key]) {
+      const { files, ...metadata } = result[key];
+      result[key] = metadata;
+    }
+  }
+  return result;
+}
 async function atomicJson(file, value) { await atomicWrite(file, jsonDocument(value)); }
 async function readJson(file, optional = false) {
   try { return JSON.parse(await fs.readFile(file, "utf8")); }
@@ -332,8 +343,20 @@ function eventsAfterSnapshot(events, snapshot) {
     && (event.revision > snapshot.revision || Date.parse(event.at) > snapshot.at));
 }
 
-function continuationText(snapshot, context, recentChanges) {
-  const base = snapshot?.markdown ?? context;
+function continuationText(snapshot, context, recentChanges, localChanges, verification) {
+  let base = snapshot?.markdown ?? context;
+  if (localChanges.status !== "unchanged") {
+    base = (base || "") + "\n\n## Local workspace verification\n"
+      + (localChanges.status === "changed"
+        ? "Uncheckpointed local changes detected. Inspect current files before continuing.\n"
+          + (localChanges.headChanged ? "Git HEAD changed since the saved baseline.\n" : "")
+          + localChanges.changedFiles.map((name) => "- " + JSON.stringify(name)).join("\n")
+          + (localChanges.totalChangedFiles > localChanges.changedFiles.length ? "\nFile list truncated.\n" : "")
+        : "Workspace freshness is unknown (" + localChanges.reason + "). Inspect current files before continuing.\n");
+  }
+  if (verification.status !== "recorded") {
+    base = (base || "") + "\n\n## Verification required\nPrevious test notes are historical; they do not verify the current workspace. Re-run relevant checks and record their results.\n";
+  }
   if (!recentChanges.length) return base;
   const lines = recentChanges.map(({ at, tool, args, ok }) =>
     "- " + at + " · " + tool + (args?.action ? " (" + args.action + ")" : "") + (ok ? "" : " · failed"));
@@ -341,15 +364,20 @@ function continuationText(snapshot, context, recentChanges) {
     + "\n\nConsult recentEvents for details and checkpoint any verified progress.\n";
 }
 
-function workGuidance(work, state, { recentChanges, latestActivity }) {
+function workGuidance(work, state, { recentChanges, latestActivity, localChanges }) {
   const lastUpdatedAt = Date.parse(state?.lastCompactionAt) > Date.parse(work.updatedAt)
     ? state.lastCompactionAt : work.updatedAt;
   const ageMs = Date.now() - Date.parse(lastUpdatedAt);
   const activityAfterSummary = latestActivity?.revision >= work.revision && Date.parse(latestActivity.at) >= Date.parse(lastUpdatedAt);
-  const reason = recentChanges.length || activityAfterSummary ? "recent_activity" : ageMs >= REVIEW_AGE_MS ? "review_age" : null;
+  const reason = localChanges.status === "changed" ? "uncheckpointed_local_changes"
+    : recentChanges.length || activityAfterSummary ? "recent_activity"
+    : localChanges.status === "unknown" ? "workspace_baseline_missing"
+    : localChanges.status === "unavailable" && work.root ? "workspace_verification_unavailable"
+    : ageMs >= REVIEW_AGE_MS ? "review_age" : null;
   const status = work.status === "closed" ? "closed" : reason ? "checkpoint_recommended" : "ready";
   return {
     status, reason: status === "checkpoint_recommended" ? reason : null, lastUpdatedAt,
+    workspaceStatus: localChanges.status,
     action: { closed: null, checkpoint_recommended: "checkpoint", ready: "resume" }[status],
   };
 }
@@ -451,13 +479,14 @@ export class WorkContextService {
       const at = now(), actor = redactSensitive(client || surface, 128);
       const work = { schema: 1, workId: id, title: redactSensitive(title || id, 300), goal: redactSensitive(goal || "", 12000), root: root ? path.resolve(String(root)) : null, status: "active", revision: 1, createdAt: at, updatedAt: at, lastClient: actor };
       const state = { schema: 1, workId: id, revision: 1, phase: "active", currentTask: work.goal || work.title, blockedBy: [], nextActions: [], lastCheckpoint: 0, lastCheckpointAt: null, lastCompaction: 0, lastCompactionAt: null, lastClient: actor };
+      state.workspaceSnapshot = await this.captureWorkspace(work);
       await fs.mkdir(path.join(dir, "checkpoints"), { recursive: true }); await fs.mkdir(path.join(dir, "compactions"), { recursive: true }); await fs.mkdir(path.join(dir, "artifacts"), { recursive: true });
       await atomicJson(path.join(dir, "work.json"), work); await atomicJson(path.join(dir, "state.json"), state);
       await atomicWrite(path.join(dir, "context.md"), contextMarkdown({ work, state, summary: state.currentTask, completed: [], decisions: [], nextSteps: [], unresolved: [], filesChanged: [], tests: [] }));
       for (const file of ["events.jsonl", "commands.jsonl", "files.jsonl", "decisions.jsonl"]) await atomicWrite(path.join(dir, file), "");
       await fs.appendFile(path.join(dir, "events.jsonl"), jsonLine({ at, type: "work_created", surface, client: actor, revision: 1 }), "utf8");
       if (activate) await this.setActive(surface, id, actor, binding);
-      return { ok: true, created: true, work, state, contextPath: path.join(dir, "context.md") };
+      return { ok: true, created: true, work, state: publicState(state), contextPath: path.join(dir, "context.md") };
     });
   }
   async scan() {
@@ -523,9 +552,13 @@ export class WorkContextService {
     const { work, state, guidance } = await this.inspect(workId, { historyLimit: 40 });
     return { ok: true, work, state, guidance, active: surface ? await this.getActive(surface, binding) : null };
   }
-  async guidanceFor(work, state, recentChanges = []) {
+  captureWorkspace(work) {
+    return captureWorkSnapshot(work.root, [this.root, dataRoot]);
+  }
+  async guidanceFor(work, state, recentChanges = [], localChanges = null) {
+    localChanges ??= compareWorkSnapshot(state.workspaceSnapshot, await this.captureWorkspace(work));
     const latestActivity = await readJson(path.join(this.workDir(work.workId), "activity.json"), true).catch(() => null);
-    return workGuidance(work, state, { recentChanges, latestActivity });
+    return workGuidance(work, state, { recentChanges, latestActivity, localChanges });
   }
   async inspect(workId, { historyLimit = 30, includeHistory = false } = {}) {
     return this.withLock(workId, async () => {
@@ -538,15 +571,21 @@ export class WorkContextService {
       const { context, compact, handoff, latest } = snapshots;
       const recentChanges = eventsAfterSnapshot(events, latest).slice(-10);
       const { currentState, notes } = snapshotState(state, snapshots);
+      const currentWorkspace = await this.captureWorkspace(work);
+      const localChanges = compareWorkSnapshot(state.workspaceSnapshot, currentWorkspace);
+      const testComparison = compareWorkSnapshot(state.verificationSnapshot, currentWorkspace);
+      const verification = { status: !notes.tests.length ? "unknown" : testComparison.status === "unchanged" ? "recorded"
+        : testComparison.status === "changed" ? "revalidation_required" : "unknown", source: "agent_reported" };
       const detail = {
-        ok: true, work, state, context, compact, handoff, paths,
-        continuationContext: continuationText(latest, context, recentChanges),
+        ok: true, work, state: publicState(state), context, compact, handoff, paths,
+        continuationContext: continuationText(latest, context, recentChanges, localChanges, verification),
         continuationSource: latest?.source ?? (context ? "context" : null),
         continuationRevision: latest?.revision ?? null,
         recentEvents: events.slice(-Math.max(1, Math.min(historyLimit, 200))),
         recentChanges,
-        summary: { currentState, nextSteps: notes.nextSteps, tests: notes.tests, revalidate: notes.revalidate, unresolved: notes.unresolved },
-        guidance: await this.guidanceFor(work, state, recentChanges),
+        localChanges, verification,
+        summary: { currentState, nextSteps: notes.nextSteps, tests: notes.tests, revalidate: notes.revalidate, unresolved: notes.unresolved, verification },
+        guidance: await this.guidanceFor(work, state, recentChanges, localChanges),
       };
       if (includeHistory) {
         detail.history = await this.readHistory(dir, detail.recentEvents, historyLimit);
@@ -621,6 +660,8 @@ export class WorkContextService {
       state.currentTask = summary; state.blockedBy = notes.unresolved; state.nextActions = notes.nextSteps; state.lastClient = actor; state.notes = notes;
       let sequence = state.lastCheckpoint || 0;
       if (checkpoint) { sequence += 1; state.lastCheckpoint = sequence; state.lastCheckpointAt = at; }
+      state.workspaceSnapshot = await this.captureWorkspace(work);
+      if (args.tests !== undefined) state.verificationSnapshot = notes.tests.length ? state.workspaceSnapshot : null;
       const files = [["context.md", contextMarkdown({ work, state, summary, ...notes })]];
       if (checkpoint) {
         const md = checkpointMarkdown({ work, state, sequence, summary, ...notes, client: actor, surface });
@@ -635,7 +676,7 @@ export class WorkContextService {
       const event = jsonLine({ at, type: close ? "work_closed" : handoff ? "handoff" : checkpoint ? "checkpoint" : "context_update", surface, client: actor, revision, checkpoint: checkpoint ? sequence : undefined });
       await commitRevision(dir, files, decisions ? [["decisions.jsonl", decisions], ["events.jsonl", event]] : [["events.jsonl", event]]);
       if (!close && args.activate !== false) await this.activateAfterCommit(surface, id, actor, args.binding);
-      return { ok: true, work, state, checkpoint: checkpoint ? sequence : null, contextPath: path.join(dir, "context.md"), handoffPath: handoff ? path.join(dir, "handoff.md") : null };
+      return { ok: true, work, state: publicState(state), checkpoint: checkpoint ? sequence : null, contextPath: path.join(dir, "context.md"), handoffPath: handoff ? path.join(dir, "handoff.md") : null };
     });
   }
   async compact(args) {
@@ -652,6 +693,7 @@ export class WorkContextService {
       const compactedNotes = Object.fromEntries(Object.keys(NOTE_HEADINGS).map((name) => [
         name, compactList((name === "unresolved" ? args.outstanding ?? args.unresolved : args[name]) ?? notes[name]),
       ]));
+      if (args.tests !== undefined) state.verificationSnapshot = compactedNotes.tests.length ? await this.captureWorkspace(work) : null;
       work.revision += 1;
       work.updatedAt = at;
       work.lastClient = actor;
@@ -681,7 +723,7 @@ export class WorkContextService {
         ["state.json", jsonDocument(state)], ["work.json", jsonDocument(work)],
       ], [["events.jsonl", jsonLine({ at, type: "compaction", surface, client: actor, revision: work.revision, compaction: sequence })]]);
       if (work.status !== "closed" && args.activate !== false) await this.activateAfterCommit(surface, id, actor, args.binding);
-      return { ok: true, work, state, compaction: sequence, compact: md, continuationContext: md, compactPath: path.join(dir, "compact.md"), historyPath: path.join(dir, "compactions", compactionName(sequence)) };
+      return { ok: true, work, state: publicState(state), compaction: sequence, compact: md, continuationContext: md, compactPath: path.join(dir, "compact.md"), historyPath: path.join(dir, "compactions", compactionName(sequence)) };
     });
   }
   async recordToolEvent({ surface = "web", binding, workId, tool, args = {}, result = null, error = null }) {

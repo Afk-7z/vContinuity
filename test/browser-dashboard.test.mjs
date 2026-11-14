@@ -4,6 +4,8 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { launchTestBrowser } from "../scripts/browser-lib.mjs";
 import { startIsolatedRuntime } from "../scripts/isolated-runtime.mjs";
 import { s256 } from "../scripts/oauth-v070-lib.mjs";
@@ -92,6 +94,49 @@ function assertNoSecretsInLogs(logs, secrets = []) {
     if (s) assert.equal(logs.includes(s), false, "Secret leaked in runtime stdout/stderr");
   }
 }
+
+test("browser: native-agent interruption resumes through Web MCP with stale-test warnings", async () => {
+  const runtime = await startIsolatedRuntime({ prefix: "vcontinuity-pw-native-" });
+  const { browser } = await launchTestBrowser();
+  try {
+    await promisify(execFile)("git", ["-C", runtime.workspaceRoot, "init"], { windowsHide: true });
+    const file = path.join(runtime.workspaceRoot, "native.txt");
+    await fs.writeFile(file, "before interruption\n");
+    const call = async (surface, args) => {
+      const result = await mcpRpc(runtime.mcpUrl, "/mcp/" + surface, "tools/call", {
+        name: "vcontinuity.work", arguments: { workId: "native-resume", ...args },
+      });
+      assert.equal(result.status, 200);
+      assert.equal(result.rpc.result?.structuredContent?.ok, true, JSON.stringify(result.rpc));
+      return result.rpc.result.structuredContent;
+    };
+    await call("agent", { action: "create", root: runtime.workspaceRoot, goal: "Continue native work" });
+    await call("agent", { action: "checkpoint", expectedRevision: 1, tests: ["Original checks passed"], nextSteps: ["Complete the feature"] });
+    await fs.writeFile(file, "changed without a final checkpoint\n");
+    const resumed = await call("web", { action: "resume" });
+    assert.equal(resumed.guidance.reason, "uncheckpointed_local_changes");
+    assert.equal(resumed.verification.status, "revalidation_required");
+    assert.deepEqual(resumed.localChanges.changedFiles, ["native.txt"]);
+    assert.match(resumed.continuationContext, /Complete the feature/);
+
+    const page = await browser.newPage();
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(runtime.adminUrl + "/", { waitUntil: "domcontentloaded" });
+    const item = '#works-list .list-item[data-work-id="native-resume"]';
+    await page.waitForSelector(item);
+    await page.click(item);
+    await page.waitForFunction(() => {
+      const text = document.getElementById("work-summary-grid")?.textContent || "";
+      return text.includes("Registros históricos") && text.includes("native.txt");
+    });
+    assert.match(await page.textContent("#work-summary-grid"), /Alterações locais sem checkpoint/);
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close().catch(() => {});
+    await runtime.stop();
+  }
+});
 
 test("browser: work creation, draft preservation, checkpoint save, and continuity resume", async () => {
   const runtime = await startIsolatedRuntime({ prefix: "vcontinuity-pw-work-" });

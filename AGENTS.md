@@ -8,6 +8,12 @@ Do not introduce dependencies on specific model vendors, external agent runtimes
 
 Computer Use is intentionally outside v0.7.0.
 
+## Automatic project continuity
+
+Use the available vContinuity Work Context MCP automatically for substantive implementation, debugging, investigation, and review, unless the user opts out. At task start, list works for the project root, reuse and resume a matching active work, or create the missing record with the user's goal. Registration and operational updates are part of the authorized project task; do not repeatedly ask permission. A one-off lookup does not register a project.
+
+When asked to finish a project by name, find its title/root in the work list and resume it. Inspect current files and verification before acting; ask only if the project identity is ambiguous. Save a short checkpoint after meaningful changes, tests, decisions, blockers, or steering: what changed, what was verified, next step. Do not wait for quota exhaustion or session end, and do not save after every read. Use expectedRevision and reconcile conflicts. Record partial working results and remaining steps for another client. Never copy secrets, private reasoning, or full conversations into context, and never report an unconfirmed save as successful. Continue authorized work if the service is unavailable and report the continuity limitation.
+
 ## MCP surfaces
 
 - `/mcp/agent`: exactly one tool, `vcontinuity.work`.

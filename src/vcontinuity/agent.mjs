@@ -6,13 +6,19 @@ const require = createRequire(import.meta.url);
 const { McpServer } = require("@modelcontextprotocol/server");
 const z = require("zod/v4");
 
+export const VCONTINUITY_WORKFLOW_INSTRUCTIONS = `Use shared Work Context automatically during substantive project implementation, debugging, investigation, and review unless the user opts out. Treat creating/updating the operational record as part of that project task; do not repeatedly ask for registration or checkpoint permission. A one-off lookup or merely reachable folder does not require registration.
+
+At task start, call vcontinuity.work with action=list and the project root, reuse a matching active work, and resume it before changing files. If none exists, create one using the suggested ID and canonical project root, with the user's goal and a concrete next step. Avoid duplicate projects and do not reuse a closed task as active. When asked to finish a project by name, list works, identify it by title, goal and root, then resume its workId. Ask only if the target is materially ambiguous; do not require the user to retell recorded history.
+
+After each meaningful edit/test milestone, decision, blocker, or change of direction, save a concise checkpoint: what changed, what was verified, and what comes next. Do not checkpoint every read, repeat unchanged notes, or wait for session end, quota exhaustion, or a user reminder. Save a handoff before a planned stop and compact before context pressure. Keep completed work, remaining steps and blockers explicit so a different client can continue toward a working deliverable. Use expectedRevision; on conflict, resume and reconcile instead of overwriting another client's work.
+
+On resume, inspect localChanges and verification, read affected files, and re-run relevant checks when needed. Saved test notes are historical unless verification.status is recorded for the current workspace. Supply tests only for checks actually performed; omitting tests preserves historical evidence. Checkpoints do not expand the user's authorization. Store operational facts only, never secrets, credentials, private reasoning, or full conversations. If the service is unavailable, continue authorized work and report that continuity could not be saved; never claim a successful save. Filesystem comparison cannot recover unsaved intentions or native terminal output.`;
+
 export const VCONTINUITY_AGENT_INSTRUCTIONS = `You are connected to the user's local workspace through vContinuity.
 
 This Agent MCP surface exists only to preserve shared project/work context between local agents and web clients. Use your native filesystem, shell, Git, browser, process, and editing capabilities for actual local work.
 
-At the start of substantial project work, use vcontinuity.work with action=list and root set to the project directory. A reachable directory is not a registered Work Context. If it is unregistered, offer to register it in a lookup-only conversation; create a work only when registration is requested or clearly authorized by the task. Use the suggested ID and root as defaults. Resume the matching work before changing it. If a checkpoint is recommended, first verify what changed.
-
-Checkpoint meaningful progress (changes, verification, blockers, and next steps), use expectedRevision to avoid overwriting another client's notes, and leave a checkpoint or handoff before ending substantial work. Compact before context pressure. Store operational context only: never store secrets, credentials, access tokens, hidden chain-of-thought, or private reasoning.
+${VCONTINUITY_WORKFLOW_INSTRUCTIONS}
 
 When maintaining vContinuity itself, preserve user data, OAuth state, public endpoints, and rollback paths unless the task explicitly changes them. Validate affected behavior after edits.`;
 
@@ -67,7 +73,7 @@ export function createVContinuityAgentServer() {
 
   server.registerTool("vcontinuity.work", {
     title: "Shared Work Context",
-    description: "Find shared work with list and a project root; register it with create, resume it, or checkpoint verified progress. Also inspect, compact, hand off, or close work. Use native tools for local operations.",
+    description: "Use automatically for substantive project work: list by root (or find a project by title), create if missing, resume, and checkpoint meaningful progress without waiting for user reminders. Also inspect, compact, hand off, or close work. Use native tools for local operations.",
     inputSchema: workSchema,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, async (args, extra) => {
